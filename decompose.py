@@ -2,6 +2,7 @@ import numpy as np
 from scipy.optimize import minimize
 from utils import FrobeniusNorm
 
+
 def decomposeQP(m, P):
     N = P.shape[1]
 

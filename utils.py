@@ -6,4 +6,4 @@ def FrobeniusNorm(M, P, E):
 
 
 def is_wholenumber(x, tol=1e-15):
-    return abs(x - round(x)) < tol
+    return np.abs(x - np.round(x)) < tol

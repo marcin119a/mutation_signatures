@@ -3,6 +3,7 @@ from scipy.optimize import minimize
 from decompose import decomposeQP
 from utils import FrobeniusNorm
 
+
 def findSigExposures(M, P, decomposition_method=decomposeQP):
     # Process and check function parameters
     # M, P
@@ -23,10 +24,10 @@ def findSigExposures(M, P, decomposition_method=decomposeQP):
 
     # Find solutions
     # Matrix of signature exposures per sample/patient (column)
-    exposures = np.apply_along_axis(decomposition_method, 1, M, P).T
-
+    exposures = np.apply_along_axis(decomposition_method, 0, M, P)
 
     # Compute estimation error for each sample/patient (Frobenius norm)
-    errors = np.apply_along_axis(lambda i: FrobeniusNorm(M[:, i], P, exposures[:, i]), 1, range(M.shape[1]))
-
-    return {'exposures': exposures, 'errors': errors}
+    idx = np.arange(M.shape[1])
+    #errors = FrobeniusNorm(M[:, idx], P, exposures[:, idx])
+    errors = np.vectorize(lambda i: FrobeniusNorm(M[:, i], P, exposures[:, i]))(range(M.shape[1]))
+    return exposures, errors

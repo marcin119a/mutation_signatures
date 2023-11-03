@@ -1,4 +1,5 @@
 from decompose import decomposeQP
+from estimates_exposures import findSigExposures
 import pandas as pd
 
 if __name__ == '__main__':
@@ -7,3 +8,6 @@ if __name__ == '__main__':
     first_col = tumorBRCA.iloc[:, 0]
     res = decomposeQP(first_col, signaturesCOSMIC.values)
     print(res)
+
+    res2 = findSigExposures(tumorBRCA, signaturesCOSMIC, decomposition_method=decomposeQP)
+    print(res2)

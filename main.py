@@ -1,11 +1,10 @@
 from decompose import decomposeQP
 from estimates_exposures import findSigExposures
-import pandas as pd
 import numpy as np
 
 if __name__ == '__main__':
-    tumorBRCA = pd.read_csv('data/tumorBRCA.csv', index_col=0).values
-    signaturesCOSMIC = pd.read_csv('data/signaturesCOSMIC.csv', index_col=0).values
+    tumorBRCA = np.genfromtxt('data/tumorBRCA.csv', delimiter=',', skip_header=1)
+    signaturesCOSMIC = np.genfromtxt('data/signaturesCOSMIC.csv', delimiter=',', skip_header=1)
     first_col = tumorBRCA[:, 0]
     res = decomposeQP(first_col, signaturesCOSMIC)
 

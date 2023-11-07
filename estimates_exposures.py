@@ -31,7 +31,7 @@ def findSigExposures(M, P, decomposition_method=decomposeQP):
 
 def bootstrap_sample(m, mutation_count, K):
     mutations_sampled = random.choices(range(m.shape[0]), k=mutation_count, weights=m)
-    m_sampled = {k: mutations_sampled.count(k) / mutation_count for k in range(1, K)}
+    m_sampled = {k: mutations_sampled.count(k) / mutation_count for k in range(1, K+1)}
     return list(m_sampled.values())
 def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=decomposeQP):
     # Process and check function parameters
@@ -58,15 +58,14 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
     # Find optimal solutions using provided decomposition method for each bootstrap replicate
     # Matrix of signature exposures per replicate (column)
     K = len(m)  # number of mutation types
+
     exposures = np.column_stack([
         decomposition_method(bootstrap_sample(m, mutation_count, K), P) for _ in range(R)
     ])
     exposures = exposures / np.sum(exposures, axis=0)  # Normalize exposures
-    exposure_columns = [f'Replicate_{i+1}' for i in range(R)]
-    exposures = dict(zip(exposure_columns, exposures))
 
     # Compute estimation error for each replicate/trial (Frobenius norm)
-    errors = [FrobeniusNorm(m, P, exposure) for exposure in exposures.values()]
-    errors = dict(zip(exposure_columns, errors))
+    errors = np.vectorize(lambda i: FrobeniusNorm(m, P, exposures[:, i]))(range(exposures.shape[1]))
+
 
     return {'exposures': exposures, 'errors': errors}

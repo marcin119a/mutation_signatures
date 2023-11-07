@@ -9,10 +9,8 @@ if __name__ == '__main__':
     res = decomposeQP(first_col, signaturesCOSMIC)
 
     exposures, errors = findSigExposures(tumorBRCA, signaturesCOSMIC, decomposition_method=decomposeQP)
-    print (exposures, errors)
+    print(exposures, errors)
     print(exposures.shape, errors.shape)
-    # Zapisz exposures do pliku CSV
-    np.savetxt('exposures.csv', exposures, delimiter=',')
+    np.savetxt('output/exposures.csv', exposures, delimiter=',')
 
-    # Zapisz errors do pliku CSV
-    np.savetxt('errors.csv', errors, delimiter=',')
+    np.savetxt('output/errors.csv', errors, delimiter=',')

@@ -17,8 +17,10 @@ if __name__ == '__main__':
 
     #np.savetxt('output/bootstrap_errors.csv', errors, delimiter=',')
 
-    exposures, errors = bootstrapSigExposures(first_col, signaturesCOSMIC, 100, 2000)
+    #exposures, errors = bootstrapSigExposures(first_col, signaturesCOSMIC, 100, 2000)
+    num_folds = 32
+    exposures, errors = crossValidationSigExposures(first_col, signaturesCOSMIC, num_folds, decomposition_method=decomposeQP)
+    np.savetxt('output/cross_valid_exposures.csv', exposures, delimiter=',')
 
-    np.savetxt('output/bootstrap_exposures.csv', exposures, delimiter=',')
+    np.savetxt('output/cross_valid_errors.csv', errors, delimiter=',')
 
-    np.savetxt('output/bootstrap_errors.csv', errors, delimiter=',')

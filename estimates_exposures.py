@@ -30,9 +30,9 @@ def findSigExposures(M, P, decomposition_method=decomposeQP):
     return exposures, errors
 
 def bootstrap_sample(m, mutation_count, K):
-    #mutations_sampled = random.choices(range(m.shape[0]), k=mutation_count, weights=m)
-    mutations_sampled = list(np.genfromtxt('output/mutations_sampled.csv', delimiter=',', skip_header=1))
-    #np.savetxt('output/mutations_sampled.csv', mutations_sampled, delimiter=',')
+    mutations_sampled = random.choices(range(m.shape[0]), k=mutation_count, weights=m)
+    # mutations_sampled = list(np.genfromtxt('output/mutations_sampled.csv', delimiter=',', skip_header=1))
+    # np.savetxt('output/mutations_sampled.csv', mutations_sampled, delimiter=',')
     m_sampled = {k: mutations_sampled.count(k) / mutation_count for k in range(1, K+1)}
     return list(m_sampled.values())
 
@@ -68,7 +68,37 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
     exposures = exposures / np.sum(exposures, axis=0)  # Normalize exposures
 
     # Compute estimation error for each replicate/trial (Frobenius norm)
+    # G x R
     errors = np.vectorize(lambda i: FrobeniusNorm(m, P, exposures[:, i]))(range(exposures.shape[1]))
 
 
     return exposures, errors
+
+
+def crossValidationSigExposures(m, P, num_folds, decomposition_method=decomposeQP):
+    # Process and check function parameters
+    P = np.array(P)
+
+    if len(m) != P.shape[0]:
+        raise ValueError("Length of vector 'm' and number of rows of matrix 'P' must be the same.")
+
+    if P.shape[1] == 1:
+        raise ValueError("Matrices 'P' must have at least 2 columns (signatures).")
+
+    m = m / np.sum(m)
+
+    fold_size = len(m) // num_folds
+    folds = [m[i:i + fold_size] for i in range(0, len(m), fold_size)]
+
+    # Perform cross-validation for each bootstrap replicate
+    fold_exposures = np.column_stack([
+        decomposition_method(np.concatenate([folds[j] if j != i else [0] * len(folds[i]+1) for j in range(num_folds)]), P)
+        for i in range(num_folds)
+    ])
+    fold_exposures = fold_exposures / np.sum(fold_exposures, axis=0)
+
+    # Compute estimation error for each replicate/trial (Frobenius norm)
+    errors = np.vectorize(lambda i: FrobeniusNorm(m, P, fold_exposures[:, i]))(range(fold_exposures.shape[1]))
+
+    return fold_exposures, errors
+

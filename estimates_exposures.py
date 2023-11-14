@@ -90,9 +90,14 @@ def crossValidationSigExposures(m, P, num_folds, decomposition_method=decomposeQ
     fold_size = len(m) // num_folds
     folds = [m[i:i + fold_size] for i in range(0, len(m), fold_size)]
 
-    # Perform cross-validation for each bootstrap replicate
+    def calculate_fold_exposures(i, num_folds):
+        fold = np.concatenate([folds[j] if j != i else [0] * len(folds[i] + 1) for j in range(num_folds)])
+        normalized_fold = fold / fold.sum()
+        return normalized_fold
+
+    # Perform cross-validation for each replicate
     fold_exposures = np.column_stack([
-        decomposition_method(np.concatenate([folds[j] if j != i else [0] * len(folds[i]+1) for j in range(num_folds)]), P)
+        decomposition_method(calculate_fold_exposures(i, num_folds), P)
         for i in range(num_folds)
     ])
     fold_exposures = fold_exposures / np.sum(fold_exposures, axis=0)

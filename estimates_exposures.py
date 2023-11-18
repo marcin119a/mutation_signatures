@@ -29,12 +29,7 @@ def findSigExposures(M, P, decomposition_method=decomposeQP):
 
     return exposures, errors
 
-def bootstrap_sample(m, mutation_count, K):
-    mutations_sampled = random.choices(range(m.shape[0]), k=mutation_count, weights=m)
-    # mutations_sampled = list(np.genfromtxt('output/mutations_sampled.csv', delimiter=',', skip_header=1))
-    # np.savetxt('output/mutations_sampled.csv', mutations_sampled, delimiter=',')
-    m_sampled = {k: mutations_sampled.count(k) / mutation_count for k in range(1, K+1)}
-    return list(m_sampled.values())
+
 
 def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=decomposeQP):
     # Process and check function parameters
@@ -61,6 +56,13 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
     # Find optimal solutions using provided decomposition method for each bootstrap replicate
     # Matrix of signature exposures per replicate (column)
     K = len(m)  # number of mutation types
+
+    def bootstrap_sample(m, mutation_count, K):
+        mutations_sampled = random.choices(range(m.shape[0]), k=mutation_count, weights=m)
+        # mutations_sampled = list(np.genfromtxt('output/mutations_sampled.csv', delimiter=',', skip_header=1))
+        # np.savetxt('output/mutations_sampled.csv', mutations_sampled, delimiter=',')
+        m_sampled = {k: mutations_sampled.count(k) / mutation_count for k in range(1, K + 1)}
+        return list(m_sampled.values())
 
     exposures = np.column_stack([
         decomposition_method(bootstrap_sample(m, mutation_count, K), P) for _ in range(R)

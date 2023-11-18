@@ -90,6 +90,9 @@ def crossValidationSigExposures(m, P, num_folds, decomposition_method=decomposeQ
     m = m / np.sum(m)
 
     fold_size = len(m) // num_folds
+
+    if len(m) % num_folds: num_folds += 1
+
     folds = [m[i:i + fold_size] for i in range(0, len(m), fold_size)]
 
     def calculate_fold_exposures(i, num_folds):

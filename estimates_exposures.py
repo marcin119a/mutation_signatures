@@ -61,8 +61,37 @@ def findSigExposures(M, P, decomposition_method=decomposeQP):
 
 
 def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=decomposeQP):
-    # Process and check function parameters
-    # m, P
+    """
+    Obtain the bootstrap distribution of signature exposures for a tumor sample.
+
+    This function allows obtaining the bootstrap distribution of the signature exposures for
+    a specific tumor sample using a specified decomposition method.
+
+    Parameters:
+        m (numpy.ndarray): Observed tumor profile vector for a patient/sample.
+            It should have a shape of (96, 1) and can represent mutation counts or mutation probabilities.
+        P (numpy.ndarray): Signature profile matrix with a shape of (96, N),
+            where N is the number of signatures (e.g., COSMIC: N=30).
+        R (int): The number of bootstrap replicates.
+        mutation_count (int, optional): If 'm' is a vector of counts, then 'mutation_count' equals
+            the summation of all the counts. If 'm' is probabilities, 'mutation_count' must be specified.
+        decomposition_method (function, optional): The method selected to get the optimal solution.
+            It should be a function. Default is 'decomposeQP'.
+
+    Returns:
+        tuple: A tuple containing two numpy arrays.
+            - exposures (numpy.ndarray): Matrix of signature exposures for each bootstrap replicate (column).
+            - errors (numpy.ndarray): Estimation error for each bootstrap replicate (Frobenius norm).
+
+    Raises:
+        ValueError: If the length of vector 'm' and the number of rows of matrix 'P' do not match,
+            if 'P' has less than 2 columns, if 'mutation_count' is not specified and 'm' does not contain counts.
+
+    Examples:
+        bootstrapSigExposures(tumorBRCA[:, 1], signaturesCOSMIC, 100, 2000, decomposeQP)
+        sigsBRCA = [1, 2, 3, 5, 6, 8, 13, 17, 18, 20, 26, 30]
+        bootstrapSigExposures(tumorBRCA[:, 1], signaturesCOSMIC[:, sigsBRCA], 10, 1000, decomposeQP)
+    """
 
     P = np.array(P)
     if len(m) != P.shape[0]:
@@ -73,7 +102,7 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
         raise ValueError("Matrices 'P' must have at least 2 columns (signatures).")
 
     # If 'mutation_count' is not specified, 'm' has to contain counts
-    if mutation_count is None: #@todo best
+    if mutation_count is None:
         if all(is_wholenumber(val) for val in m):
             mutation_count = m.sum()
         else:

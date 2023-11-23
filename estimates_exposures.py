@@ -135,7 +135,7 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
     return exposures, errors
 
 
-def crossValidationSigExposures(m, P, num_folds, decomposition_method=decomposeQP):
+def crossValidationSigExposures(m, P, fold_size, shuffle=True, decomposition_method=decomposeQP):
     """
     Perform cross-validation to estimate signature exposures for a tumor sample.
 
@@ -147,7 +147,8 @@ def crossValidationSigExposures(m, P, num_folds, decomposition_method=decomposeQ
             It should have a shape of (n, 1), where n is the number of mutations.
         P (numpy.ndarray): Signature profile matrix with a shape of (n, N),
             where N is the number of signatures.
-        num_folds (int): The number of cross-validation folds.
+        fold_size (int): The number of cross-validation size.
+        shuffle (bool): Change the order of mutations
         decomposition_method (function, optional): The method selected to get the optimal solution.
             It should be a function. Default is 'decomposeQP'.
 
@@ -176,11 +177,18 @@ def crossValidationSigExposures(m, P, num_folds, decomposition_method=decomposeQ
 
     m = m / np.sum(m)
 
-    fold_size = len(m) // num_folds
 
-    if len(m) % num_folds: num_folds += 1
+    if shuffle:
+        permutation_indices = np.random.permutation(len(m))
+        m = m[permutation_indices]
+        P = P[permutation_indices,:]
 
     folds = [m[i:i + fold_size] for i in range(0, len(m), fold_size)]
+
+    # Handle the remaining elements that do not fit in full folds
+    if len(m) % fold_size != 0:
+        last_fold = m[-(len(m) % fold_size):]  # Ostatni podział zawiera pozostałe elementy
+        folds.append(last_fold)
 
     def calculate_fold_exposures(i, num_folds):
         fold = np.concatenate([folds[j] if j != i else [0] * len(folds[i] + 1) for j in range(num_folds)])
@@ -189,8 +197,8 @@ def crossValidationSigExposures(m, P, num_folds, decomposition_method=decomposeQ
 
     # Perform cross-validation for each replicate
     fold_exposures = np.column_stack([
-        decomposition_method(calculate_fold_exposures(i, num_folds), P)
-        for i in range(num_folds)
+        decomposition_method(calculate_fold_exposures(i, len(folds)), P)
+        for i in range(len(folds))
     ])
     fold_exposures = fold_exposures / np.sum(fold_exposures, axis=0)
 

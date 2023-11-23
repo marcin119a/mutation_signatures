@@ -11,16 +11,20 @@ if __name__ == '__main__':
     first_col = tumorBRCA[:, 0]
     #res = decomposeQP(first_col, signaturesCOSMIC)
 
-    exposures, errors = findSigExposures(tumorBRCA, signaturesCOSMIC, decomposition_method=decomposeQP)
+    #exposures, errors = findSigExposures(tumorBRCA, signaturesCOSMIC, decomposition_method=decomposeQP)
     #print(exposures, errors)
     #print(exposures.shape, errors.shape)
-    np.savetxt('output/exposures.csv', exposures, delimiter=',', header=','.join(patients))
+    #np.savetxt('output/exposures.csv', exposures, delimiter=',', header=','.join(patients))
 
-    np.savetxt('output/errors.csv', errors, delimiter=',')
+    #np.savetxt('output/errors.csv', errors, delimiter=',')
 
-    #exposures, errors = bootstrapSigExposures(first_col, signaturesCOSMIC, 100, 2000)
-    num_folds = 5
-    exposures, errors = crossValidationSigExposures(first_col, signaturesCOSMIC, num_folds, decomposition_method=decomposeQP)
+    exposures, errors = bootstrapSigExposures(first_col, signaturesCOSMIC, 16, 2000)
+
+    np.savetxt('output/bootstrap_exposures.csv', exposures, delimiter=',')
+
+    np.savetxt('output/bootstrap_errors.csv', errors, delimiter=',')
+    fold_size = 4
+    exposures, errors = crossValidationSigExposures(first_col, signaturesCOSMIC, fold_size, decomposition_method=decomposeQP)
     np.savetxt('output/cross_valid_exposures.csv', exposures, delimiter=',')
 
     np.savetxt('output/cross_valid_errors.csv', errors, delimiter=',')

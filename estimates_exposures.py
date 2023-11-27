@@ -131,7 +131,6 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
     # G x R
     errors = np.vectorize(lambda i: FrobeniusNorm(m, P, exposures[:, i]))(range(exposures.shape[1]))
 
-
     return exposures, errors
 
 
@@ -187,7 +186,7 @@ def crossValidationSigExposures(m, P, fold_size, shuffle=True, decomposition_met
 
     # Handle the remaining elements that do not fit in full folds
     if len(m) % fold_size != 0:
-        last_fold = m[-(len(m) % fold_size):]  # Ostatni podział zawiera pozostałe elementy
+        last_fold = m[-(len(m) % fold_size):]
         folds.append(last_fold)
 
     def calculate_fold_exposures(i, num_folds):

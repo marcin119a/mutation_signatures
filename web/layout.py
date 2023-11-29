@@ -1,9 +1,10 @@
 import dash
 from web.uploader import parse_contents, load_signatures
-from estimates_exposures import bootstrapSigExposures, crossValidationSigExposures
+from estimates_exposures import bootstrapSigExposures, crossValidationSigExposures, findSigExposures
 import numpy as np
 from dash import dcc, html, Input, Output, State
 import plotly.graph_objects as go
+import plotly.express as px
 
 # Initialize Dash application
 app = dash.Dash(__name__)
@@ -32,7 +33,7 @@ app.layout = html.Div([
         dcc.Slider(
             id='fold_size-slider',
             min=0,
-            max=20,  # Example maximum value, adjust as needed
+            max=10,  # Example maximum value, adjust as needed
             step=1,
             value=4,  # Default value
         )
@@ -79,14 +80,19 @@ def update_output(contents, filename, fold_size, R, mutation_count, dropdown_val
         column_index = np.where(patients == patient)[0]
 
         patient_column = data[:, column_index].squeeze()
-        signaturesCOSMIC = load_signatures(dropdown_value)
+        sigsBRCA = [x - 1 for x in [1, 2, 3, 5, 6, 8, 13, 17, 18, 20, 26, 30]]
+        signatures = load_signatures(dropdown_value)[:, sigsBRCA]
 
-        exposures, errors = crossValidationSigExposures(patient_column, signaturesCOSMIC, fold_size)
+        exposures, errors = findSigExposures(patient_column.reshape(patient_column.shape[0], 1), signatures)
 
-        fig_cross = go.Figure()
+        exposures_cv, errors_cv = crossValidationSigExposures(patient_column, signatures, fold_size)
 
-        for i in range(exposures.shape[0]):
-            fig_cross.add_trace(go.Box(y=exposures[i, :], name=f'Sig {i + 1}'))
+        fig_cross = px.strip(x=range(exposures.shape[0]), y=exposures.squeeze(), stripmode='overlay')
+
+        for i in range(exposures_cv.shape[0]):
+            fig_cross.add_trace(go.Box(
+                y=exposures_cv[i, :],
+                name=f'Sig {sigsBRCA[i] + 1}'))
 
         fig_cross.update_layout(
             title=f'Cross valid for {patient}',
@@ -94,12 +100,14 @@ def update_output(contents, filename, fold_size, R, mutation_count, dropdown_val
             yaxis_title='Signature contribution'
         )
 
-        exposures, errors = bootstrapSigExposures(patient_column, signaturesCOSMIC, R, mutation_count)
+        exposures_bt, errors_bt = bootstrapSigExposures(patient_column, signatures, R, mutation_count)
 
-        fig_bootstrap = go.Figure()
+        fig_bootstrap = px.strip(x=range(exposures.shape[0]), y=exposures.squeeze(), stripmode='overlay')
 
-        for i in range(exposures.shape[0]):
-            fig_bootstrap.add_trace(go.Box(y=exposures[i, :], name=f'Sig {i + 1}'))
+        for i in range(exposures_bt.shape[0]):
+            fig_bootstrap.add_trace(go.Box(
+                y=exposures_bt[i, :],
+                name=f'Sig {sigsBRCA[i] + 1}'))
 
         fig_bootstrap.update_layout(
             title=f'Bootstrap for {patient}',

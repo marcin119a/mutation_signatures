@@ -109,14 +109,14 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
 
     # Normalize m to be a vector of probabilities.
     m = m / np.sum(m)
-
     # Find optimal solutions using provided decomposition method for each bootstrap replicate
     # Matrix of signature exposures per replicate (column)
     K = len(m)  # number of mutation types
 
     def bootstrap_sample(m, mutation_count, K):
         mutations_sampled = random.choices(range(m.shape[0]), k=mutation_count, weights=m)
-        m_sampled = {k: mutations_sampled.count(k) / mutation_count for k in range(1, K + 1)}
+        m_sampled = {k: mutations_sampled.count(k) / mutation_count for k in range(0, K)}
+        print(len(list(m_sampled.values())))
         return list(m_sampled.values())
 
     exposures = np.column_stack([

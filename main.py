@@ -1,6 +1,7 @@
 from decompose import decomposeQP
 from estimates_exposures import *
 import numpy as np
+from utils import calculate_BIC
 
 if __name__ == '__main__':
     tumorBRCA = np.genfromtxt('data/tumorBRCA.csv', delimiter=',', skip_header=1)
@@ -9,17 +10,18 @@ if __name__ == '__main__':
     signaturesCOSMIC = np.genfromtxt('data/signaturesCOSMIC.csv', delimiter=',', skip_header=1)
     signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)
     first_col = tumorBRCA[:, 0]
+    print(first_col.shape)
     #res = decomposeQP(first_col, signaturesCOSMIC)
 
-    #exposures, errors = findSigExposures(tumorBRCA, signaturesCOSMIC, decomposition_method=decomposeQP)
+    exposures, errors = findSigExposures(tumorBRCA, signaturesCOSMIC, decomposition_method=decomposeQP)
     #print(exposures, errors)
     #print(exposures.shape, errors.shape)
     #np.savetxt('output/exposures.csv', exposures, delimiter=',', header=','.join(patients))
 
     #np.savetxt('output/errors.csv', errors, delimiter=',')
+    print(calculate_BIC(signaturesCOSMIC, exposures, errors))
 
     exposures, errors = bootstrapSigExposures(first_col, signaturesCOSMIC, 16, 2000)
-
     np.savetxt('output/bootstrap_exposures.csv', exposures, delimiter=',')
 
     np.savetxt('output/bootstrap_errors.csv', errors, delimiter=',')

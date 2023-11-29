@@ -1,6 +1,6 @@
 import base64
-import pandas as pd
-from dash import  html
+import numpy as np
+from dash import html
 import io
 
 # Function to parse CSV file content
@@ -11,7 +11,9 @@ def parse_contents(contents, filename):
     try:
         if 'csv' in filename:
             # Case for CSV file
-            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+            data = np.genfromtxt(io.StringIO(decoded.decode('utf-8')), delimiter=',', skip_header=1)
+            patients = np.genfromtxt(io.StringIO(decoded.decode('utf-8')), delimiter=',', max_rows=1, dtype=str)[1:]
+            patients = np.char.strip(patients, '"')
         else:
             return html.Div([
                 'There was an error processing this file.'
@@ -22,4 +24,4 @@ def parse_contents(contents, filename):
             'There was an error processing this file.'
         ])
 
-    return df
+    return data, patients

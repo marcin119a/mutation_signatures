@@ -3,7 +3,6 @@ from web.uploader import parse_contents
 from estimates_exposures import bootstrapSigExposures, crossValidationSigExposures
 import numpy as np
 from dash import dcc, html, Input, Output, State
-import pandas as pd
 import plotly.graph_objects as go
 
 # Initialize Dash application
@@ -54,30 +53,19 @@ app.layout = html.Div([
 )
 def update_graph(contents, filename, fold_size, R, mutation_count, patient):
     if contents is not None:
-        try:
-            df = parse_contents(contents, filename)
-        except:
-            raise ValueError
+        data, patients = parse_contents(contents, filename)
+        column_index = np.where(patients == patient)[0]
 
-        df = df.set_index('Unnamed: 0')
-        first_col = df[patient].to_numpy()
+        patient_column = data[:, column_index].squeeze()
         signaturesCOSMIC = np.genfromtxt('../data/signaturesCOSMIC.csv', delimiter=',', skip_header=1)
         signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)
 
-        exposures, errors = bootstrapSigExposures(first_col, signaturesCOSMIC, R, mutation_count)
-
-        np.savetxt('../output/bootstrap_exposures.csv', exposures, delimiter=',')
-        np.savetxt('../output/bootstrap_errors.csv', errors, delimiter=',')
-
-        exposures, errors = crossValidationSigExposures(first_col, signaturesCOSMIC, fold_size)
-        np.savetxt('../output/cross_valid_exposures.csv', exposures, delimiter=',')
-        np.savetxt('../output/cross_valid_errors.csv', errors, delimiter=',')
+        exposures, errors = crossValidationSigExposures(patient_column, signaturesCOSMIC, fold_size)
 
         fig_cross = go.Figure()
-        data = pd.read_csv('../output/cross_valid_exposures.csv', header=None).values
 
-        for i in range(data.shape[0]):
-            fig_cross.add_trace(go.Box(y=data[i, :], name=f'Sig {i + 1}'))
+        for i in range(exposures.shape[0]):
+            fig_cross.add_trace(go.Box(y=exposures[i, :], name=f'Sig {i + 1}'))
 
         fig_cross.update_layout(
             title=f'Cross valid for {patient}',
@@ -85,11 +73,12 @@ def update_graph(contents, filename, fold_size, R, mutation_count, patient):
             yaxis_title='Signature contribution'
         )
 
-        fig_bootstrap = go.Figure()
-        data = pd.read_csv('../output/bootstrap_exposures.csv', header=None).values
+        exposures, errors = bootstrapSigExposures(patient_column, signaturesCOSMIC, R, mutation_count)
 
-        for i in range(data.shape[0]):
-            fig_bootstrap.add_trace(go.Box(y=data[i, :], name=f'Sig {i + 1}'))
+        fig_bootstrap = go.Figure()
+
+        for i in range(exposures.shape[0]):
+            fig_bootstrap.add_trace(go.Box(y=exposures[i, :], name=f'Sig {i + 1}'))
 
         fig_bootstrap.update_layout(
             title=f'Bootstrap for {patient}',

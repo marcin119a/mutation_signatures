@@ -120,3 +120,4 @@ def update_output(contents, filename, fold_size, R, mutation_count, dropdown_val
 )
 def update_output(value, R, mutation_count):
     return ' fold_size {} R: {}, mutation_count: {}'.format(value, R, mutation_count)
+

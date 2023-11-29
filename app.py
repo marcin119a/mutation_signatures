@@ -1,4 +1,4 @@
-from web.graph import app
+from web.layout import app
 
 
 # Run the application

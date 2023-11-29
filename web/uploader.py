@@ -27,11 +27,8 @@ def parse_contents(contents, filename):
     return data, patients
 
 def load_signatures(filename):
-    if '.txt' in filename:
-        signaturesCOSMIC = np.genfromtxt(f'../data/{filename}', delimiter='\t', skip_header=1)
-    else:
-        signaturesCOSMIC = np.genfromtxt(f'../data/{filename}', delimiter=',', skip_header=1)
+    delimiter = '\t' if '.txt' in filename else ','
+    filepath = f'../data/{filename}'
+    signatures = np.genfromtxt(filepath, delimiter=delimiter, skip_header=1)
 
-    signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)
-
-    return signaturesCOSMIC
+    return np.delete(signatures, 0, axis=1)

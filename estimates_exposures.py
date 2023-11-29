@@ -93,7 +93,6 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
         bootstrapSigExposures(tumorBRCA[:, 1], signaturesCOSMIC[:, sigsBRCA], 10, 1000, decomposeQP)
     """
 
-    P = np.array(P)
     if len(m) != P.shape[0]:
         raise ValueError("Length of vector 'm' and number of rows of matrix 'P' must be the same.")
     #if not np.all(np.array(list(m.keys())) == P.shape[0]):
@@ -117,8 +116,6 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
 
     def bootstrap_sample(m, mutation_count, K):
         mutations_sampled = random.choices(range(m.shape[0]), k=mutation_count, weights=m)
-        # mutations_sampled = list(np.genfromtxt('output/mutations_sampled.csv', delimiter=',', skip_header=1))
-        # np.savetxt('output/mutations_sampled.csv', mutations_sampled, delimiter=',')
         m_sampled = {k: mutations_sampled.count(k) / mutation_count for k in range(1, K + 1)}
         return list(m_sampled.values())
 

@@ -176,13 +176,12 @@ def crossValidationSigExposures(m, P, fold_size, shuffle=True, decomposition_met
 
     m = m / np.sum(m)
 
-
     if shuffle:
         permutation_indices = np.random.permutation(len(m))
         m = m[permutation_indices]
         P = P[permutation_indices,:]
 
-    folds = [m[i:i + fold_size] for i in range(0, len(m), fold_size)]
+    folds = [m[i:i + fold_size] for i in range(0, (len(m) - (len(m) % fold_size)), fold_size)]
 
     # Handle the remaining elements that do not fit in full folds
     if len(m) % fold_size != 0:

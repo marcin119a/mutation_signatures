@@ -1,5 +1,5 @@
 import dash
-from web.uploader import parse_contents
+from web.uploader import parse_contents, load_signatures
 from estimates_exposures import bootstrapSigExposures, crossValidationSigExposures
 import numpy as np
 from dash import dcc, html, Input, Output, State
@@ -10,32 +10,53 @@ app = dash.Dash(__name__)
 
 # Application layout
 app.layout = html.Div([
-    dcc.Upload(
-        id='upload-data',
-        children=html.Div(['Drag and Drop or ', html.A('Select Files')]),
-        style={
-            'width': '100%',
-            'height': '60px',
-            'lineHeight': '60px',
-            'borderWidth': '1px',
-            'borderStyle': 'dashed',
-            'borderRadius': '5px',
-            'textAlign': 'center',
-            'margin': '10px'
-        },
-        # Do not allow multiple files to be uploaded
-        multiple=False
-    ),
-    dcc.Slider(
-        id='fold_size-slider',
-        min=0,
-        max=20,  # Example maximum value, adjust as needed
-        step=1,
-        value=4,  # Default value
-    ),
-    dcc.Input(id='input-R', type='number', value=10),
-    dcc.Input(id='input-mutation-count', type='number', value=1000),
-    dcc.Input(id='patient', type='text', value='PD24196'),
+    html.Div([
+        # Komponent Upload w pierwszym wierszu
+        dcc.Upload(
+            id='upload-data',
+            children=html.Div(['Drag and Drop or ', html.A('Select Files')]),
+            style={
+                'width': '100%',
+                'height': '60px',
+                'lineHeight': '60px',
+                'borderWidth': '1px',
+                'borderStyle': 'dashed',
+                'borderRadius': '5px',
+                'textAlign': 'center',
+                'margin': '10px'
+            },
+            multiple=False
+        )
+    ], style={'display': 'flex', 'justifyContent': 'center'}),
+    html.Div([
+        dcc.Slider(
+            id='fold_size-slider',
+            min=0,
+            max=20,  # Example maximum value, adjust as needed
+            step=1,
+            value=4,  # Default value
+        )
+    ], style={'padding': '20px'}),
+    html.Div([
+        dcc.Input(id='input-R', type='number', value=10, style={'marginRight': '10px'}),
+        dcc.Input(id='input-mutation-count', type='number', value=1000, style={'marginRight': '10px'}),
+        dcc.Input(id='patient', type='text', value='PD24196'),
+    ], style={'display': 'flex', 'justifyContent': 'center', 'padding': '10px'}),
+
+    html.Div([
+        dcc.Dropdown(
+            id='dropdown',
+            options=[
+                {'label': 'signaturesCOSMIC', 'value': 'signaturesCOSMIC.csv'},
+                {'label': 'COSMIC_v1_SBS_GRCh37', 'value': 'COSMIC_v1_SBS_GRCh37.txt'},
+                {'label': 'COSMIC_v2_SBS_GRCh37.txt', 'value': 'COSMIC_v2_SBS_GRCh37.txt'},
+                {'label': 'COSMIC_v3.1_SBS_GRCh37.txt', 'value': 'COSMIC_v3.1_SBS_GRCh37.txt'},
+                {'label': 'COSMIC_v3.4_SBS_GRCh37.txt', 'value': 'COSMIC_v3.4_SBS_GRCh37.txt'},
+            ],
+            value='signaturesCOSMIC.csv'  # wartość domyślna
+        )
+    ], style={'padding': '10px'}),
+
     html.Div(id='slider-output-container'),
     dcc.Graph(id='bar-plot-crossvalid'),
     dcc.Graph(id='bar-plot-bootstrap')
@@ -48,17 +69,17 @@ app.layout = html.Div([
      Input('upload-data', 'filename'),
      Input('fold_size-slider', 'value'),
      Input('input-R', 'value'),
-     Input('input-mutation-count', 'value')],
+     Input('input-mutation-count', 'value'),
+     Input('dropdown', 'value')],  # Dodanie listy rozwijanej jako Input
     [State('patient', 'value')]
 )
-def update_graph(contents, filename, fold_size, R, mutation_count, patient):
+def update_output(contents, filename, fold_size, R, mutation_count, dropdown_value, patient):
     if contents is not None:
         data, patients = parse_contents(contents, filename)
         column_index = np.where(patients == patient)[0]
 
         patient_column = data[:, column_index].squeeze()
-        signaturesCOSMIC = np.genfromtxt('../data/signaturesCOSMIC.csv', delimiter=',', skip_header=1)
-        signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)
+        signaturesCOSMIC = load_signatures(dropdown_value)
 
         exposures, errors = crossValidationSigExposures(patient_column, signaturesCOSMIC, fold_size)
 

@@ -2,6 +2,7 @@ import dash
 from web.uploader import parse_contents, load_signatures
 from estimates_exposures import bootstrapSigExposures, crossValidationSigExposures, findSigExposures
 import numpy as np
+from utils import is_wholenumber
 from dash import dcc, html, Input, Output, State
 import plotly.graph_objects as go
 import plotly.express as px
@@ -9,10 +10,17 @@ import plotly.express as px
 # Initialize Dash application
 app = dash.Dash(__name__)
 
+data = {
+    'signaturesCOSMIC.csv': [1, 2, 3, 5, 6, 8, 13, 17, 18, 20, 26, 30],
+    'COSMIC_v1_SBS_GRCh37.txt': [1, 2, 3, 4, 5, 6, 7, 9, 15],
+    'COSMIC_v2_SBS_GRCh37.txt': [1, 2, 3, 5, 6, 8, 13, 17, 18, 20, 26, 30],
+    'COSMIC_v3.1_SBS_GRCh37.txt': [1, 2, 3, 5, 6, 8, 13, 17, 18, 20, 26, 30],
+}
+cancer_type = ['Biliary', 'Bladder', 'Bone and Soft Tissue', 'Breast', 'Cervix', 'CNS', 'Colorectal', 'Esophagus', 'Head and Neck', 'Kidney', 'Liver', 'Lung', 'Lymphoid', 'Myeloid', 'NET', 'Oral Oropharyngeal', 'Ovary', 'Pancreas', 'Prostate', 'Skin', 'Stomach', 'Thyroid', 'Uterus',]
+
 # Application layout
 app.layout = html.Div([
     html.Div([
-        # Komponent Upload w pierwszym wierszu
         dcc.Upload(
             id='upload-data',
             children=html.Div(['Drag and Drop or ', html.A('Select Files')]),
@@ -30,6 +38,26 @@ app.layout = html.Div([
         )
     ], style={'display': 'flex', 'justifyContent': 'center'}),
     html.Div([
+        dcc.Dropdown(
+            id='dropdown',
+            options=[
+                {'label': 'signaturesCOSMIC', 'value': 'signaturesCOSMIC.csv'},
+                {'label': 'COSMIC_v1_SBS_GRCh37', 'value': 'COSMIC_v1_SBS_GRCh37.txt'},
+                {'label': 'COSMIC_v2_SBS_GRCh37.txt', 'value': 'COSMIC_v2_SBS_GRCh37.txt'},
+                {'label': 'COSMIC_v3.1_SBS_GRCh37.txt', 'value': 'COSMIC_v3.1_SBS_GRCh37.txt'},
+                {'label': 'COSMIC_v3.4_SBS_GRCh37.txt', 'value': 'COSMIC_v3.4_SBS_GRCh37.txt'},
+            ],
+            value='signaturesCOSMIC.csv'
+        ),
+        dcc.Dropdown(
+            id='signatures-dropdown',
+            options=[{'label': k, 'value': k} for k in data.keys()],
+            multi=True,
+            value=[k for k in data['signaturesCOSMIC.csv']],
+        ),
+    ], style={'padding': '10px'}),
+
+    html.Div([
         dcc.Slider(
             id='fold_size-slider',
             min=0,
@@ -40,54 +68,60 @@ app.layout = html.Div([
     ], style={'padding': '20px'}),
     html.Div([
         dcc.Input(id='input-R', type='number', value=10, style={'marginRight': '10px'}),
-        dcc.Input(id='input-mutation-count', type='number', value=1000, style={'marginRight': '10px'}),
-        dcc.Input(id='patient', type='text', value='PD24196'),
+        dcc.Input(id='input-mutation-count', type='number', value=0, style={'marginRight': '10px'}),
+        dcc.Input(id='patient', type='text', value='PD3890a'),
     ], style={'display': 'flex', 'justifyContent': 'center', 'padding': '10px'}),
 
-    html.Div([
-        dcc.Dropdown(
-            id='dropdown',
-            options=[
-                {'label': 'signaturesCOSMIC', 'value': 'signaturesCOSMIC.csv'},
-                {'label': 'COSMIC_v1_SBS_GRCh37', 'value': 'COSMIC_v1_SBS_GRCh37.txt'},
-                {'label': 'COSMIC_v2_SBS_GRCh37.txt', 'value': 'COSMIC_v2_SBS_GRCh37.txt'},
-                {'label': 'COSMIC_v3.1_SBS_GRCh37.txt', 'value': 'COSMIC_v3.1_SBS_GRCh37.txt'},
-                {'label': 'COSMIC_v3.4_SBS_GRCh37.txt', 'value': 'COSMIC_v3.4_SBS_GRCh37.txt'},
-            ],
-            value='signaturesCOSMIC.csv'  # wartość domyślna
-        )
-    ], style={'padding': '10px'}),
 
     html.Div(id='slider-output-container'),
     dcc.Graph(id='bar-plot-crossvalid'),
     dcc.Graph(id='bar-plot-bootstrap')
 ])
 
+@app.callback(
+    [Output('signatures-dropdown', 'options'), Output('signatures-dropdown', 'value')],
+    [Input('dropdown', 'value')]
+)
+def set_options(selected_category):
+    return [{'label': f"Sig {i}", 'value': i} for i in data[selected_category]], [i for i in data[selected_category]]
+
+
 # Callback to update the plot based on data and parameters
 @app.callback(
-    [Output('bar-plot-crossvalid', 'figure'), Output('bar-plot-bootstrap', 'figure')],
+    [Output('bar-plot-crossvalid', 'figure'),
+     Output('bar-plot-bootstrap', 'figure'),
+     Output('input-mutation-count', 'value')],
     [Input('upload-data', 'contents'),
      Input('upload-data', 'filename'),
      Input('fold_size-slider', 'value'),
      Input('input-R', 'value'),
-     Input('input-mutation-count', 'value'),
-     Input('dropdown', 'value')],  # Dodanie listy rozwijanej jako Input
-    [State('patient', 'value')]
+     Input('input-mutation-count', 'value')
+     ],
+    [State('dropdown', 'value'),
+     State('patient', 'value'),
+     State('signatures-dropdown', 'value')]
 )
-def update_output(contents, filename, fold_size, R, mutation_count, dropdown_value, patient):
+def update_output(contents, filename, fold_size, R, mutation_count, dropdown_value, patient, signatures):
     if contents is not None:
         data, patients = parse_contents(contents, filename)
         column_index = np.where(patients == patient)[0]
 
         patient_column = data[:, column_index].squeeze()
-        sigsBRCA = [x - 1 for x in [1, 2, 3, 5, 6, 8, 13, 17, 18, 20, 26, 30]]
+
+        if mutation_count == 0:
+            if all(is_wholenumber(val) for val in patient_column):
+                mutation_count = int(patient_column.sum())
+
+        sigsBRCA = [x - 1 for x in signatures]
         signatures = load_signatures(dropdown_value)[:, sigsBRCA]
 
         exposures, errors = findSigExposures(patient_column.reshape(patient_column.shape[0], 1), signatures)
 
         exposures_cv, errors_cv = crossValidationSigExposures(patient_column, signatures, fold_size)
 
-        fig_cross = px.strip(x=range(exposures.shape[0]), y=exposures.squeeze(), stripmode='overlay')
+        fig_cross = px.strip(x=range(1, exposures.shape[0] + 1),
+                             y=exposures.squeeze(),
+                             stripmode='overlay')
 
         for i in range(exposures_cv.shape[0]):
             fig_cross.add_trace(go.Box(
@@ -102,7 +136,9 @@ def update_output(contents, filename, fold_size, R, mutation_count, dropdown_val
 
         exposures_bt, errors_bt = bootstrapSigExposures(patient_column, signatures, R, mutation_count)
 
-        fig_bootstrap = px.strip(x=range(exposures.shape[0]), y=exposures.squeeze(), stripmode='overlay')
+        fig_bootstrap = px.strip(x=range(1, exposures.shape[0] + 1),
+                             y=exposures.squeeze(),
+                             stripmode='overlay')
 
         for i in range(exposures_bt.shape[0]):
             fig_bootstrap.add_trace(go.Box(
@@ -115,7 +151,7 @@ def update_output(contents, filename, fold_size, R, mutation_count, dropdown_val
             yaxis_title='Signature contribution'
         )
 
-        return fig_cross, fig_bootstrap
+        return fig_cross, fig_bootstrap, mutation_count
     else:
         return dash.no_update
 

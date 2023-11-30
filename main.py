@@ -4,8 +4,8 @@ import numpy as np
 from utils import calculate_BIC
 
 if __name__ == '__main__':
-    tumorBRCA = np.genfromtxt('data/tumorBRCA.csv', delimiter=',', skip_header=1)
-    patients = np.genfromtxt('data/tumorBRCA.csv', delimiter=',', max_rows=1, dtype=str)[1:]
+    tumorBRCA = np.genfromtxt('data/counts_119breast.csv', delimiter=',', skip_header=1)
+    patients = np.genfromtxt('data/counts_119breast.csv', delimiter=',', max_rows=1, dtype=str)[1:]
     tumorBRCA = np.delete(tumorBRCA, 0, axis=1)
     signaturesCOSMIC = np.genfromtxt('data/signaturesCOSMIC.csv', delimiter=',', skip_header=1)
     signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)

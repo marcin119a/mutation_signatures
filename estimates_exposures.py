@@ -116,7 +116,6 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
     def bootstrap_sample(m, mutation_count, K):
         mutations_sampled = random.choices(range(m.shape[0]), k=mutation_count, weights=m)
         m_sampled = {k: mutations_sampled.count(k) / mutation_count for k in range(0, K)}
-        print(len(list(m_sampled.values())))
         return list(m_sampled.values())
 
     exposures = np.column_stack([

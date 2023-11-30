@@ -111,6 +111,8 @@ def update_output(contents, filename, fold_size, R, mutation_count, dropdown_val
         if mutation_count == 0:
             if all(is_wholenumber(val) for val in patient_column):
                 mutation_count = int(patient_column.sum())
+        else:
+            mutation_count = 1000
 
         sigsBRCA = [x - 1 for x in signatures]
         signatures = load_signatures(dropdown_value)[:, sigsBRCA]

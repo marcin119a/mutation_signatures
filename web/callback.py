@@ -9,6 +9,7 @@ from dash import Input, Output, State
 import dash
 import pandas as pd
 
+
 @app.callback(
     [Output('signatures-dropdown', 'options'), Output('signatures-dropdown', 'value')],
     [Input('dropdown', 'value')]
@@ -17,15 +18,14 @@ def set_options(selected_category):
     return [{'label': f"Sig {i}", 'value': i} for i in data[selected_category]], [i for i in data[selected_category]]
 
 @app.callback(
-    Output('session', 'data'),
-    [Input('upload-data', 'contents'),
-     Input('upload-data', 'filename')]
+    [Output('session', 'data')],
+    [Input('upload-data', 'contents')],
+    [State('upload-data', 'filename')]
 )
 def update_output(contents, filename):
     if contents is not None:
         data, patients = parse_contents(contents, filename)
-        dict_store = {'data': data, 'patients': patients}
-        return dict_store
+        return [{'data': data, 'patients': patients, 'filename': filename}]
     else:
         return dash.no_update
 
@@ -40,15 +40,15 @@ def update_output(contents, filename):
      Input('input-R', 'value'),
      Input('input-mutation-count', 'value'),
      Input('organ-dropdown', 'value'),
+     Input('patient-dropdown', 'value'),
      Input('session', 'data'),
      ],
     [State('dropdown', 'value'),
-     State('patient', 'value'),
      State('signatures-dropdown', 'value')]
 )
-def update_output(fold_size, R, mutation_count, organ, stored_data, dropdown_value, patient, signatures):
-    if stored_data is not None:
-        data, patients = stored_data
+def update_output(fold_size, R, mutation_count, organ, patient, stored_data, dropdown_value, signatures):
+    if stored_data is not None and patient is not None:
+        data, patients = np.array(stored_data['data']), np.array(stored_data['patients'])
         column_index = np.where(patients == patient)[0]
 
         patient_column = data[:, column_index].squeeze()
@@ -60,9 +60,8 @@ def update_output(fold_size, R, mutation_count, organ, stored_data, dropdown_val
             mutation_count = 1000
         file_name = f"../data/signatures_organ/{organ}_Signature.csv"
         try:
-            data = pd.read_csv(file_name)
-            np_array = data.values
-            print(np_array)
+            dd = pd.read_csv(file_name)
+            np_array = dd.values
         except FileNotFoundError:
             return f"Nie znaleziono pliku dla organu: {organ}"
 
@@ -106,7 +105,8 @@ def update_output(fold_size, R, mutation_count, organ, stored_data, dropdown_val
         )
 
         return fig_cross, fig_bootstrap, mutation_count
-
+    else:
+        return None, None, 0
 
 # Callback to display the value of the slider
 @app.callback(
@@ -118,3 +118,14 @@ def update_output(fold_size, R, mutation_count, organ, stored_data, dropdown_val
 def update_output(value, R, mutation_count):
     return ' fold_size {} R: {}, mutation_count: {}'.format(value, R, mutation_count)
 
+from dash import html
+@app.callback(
+    Output('upload-message', 'children'),
+    Output('patient-dropdown', 'options'),
+    Output('patient-dropdown', 'value'),
+    [Input('session', 'data')]
+)
+def update_message(data):
+    if data is not None:
+        return html.Div(f'Plik {data["filename"]} został wczytany.'), [{'label': patient, 'value': patient} for patient in data['patients']], data['patients'][0]
+    return '', [{'label': 'None', 'value': 'None'}], None

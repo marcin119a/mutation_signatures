@@ -36,7 +36,13 @@ app.layout = html.Div([
             multiple=False
         )
     ], style={'display': 'flex', 'justifyContent': 'center'}),
-    dcc.Store(id='session', storage_type='session'),
+    html.Div(id='upload-message'),
+    dcc.Dropdown(
+        id='patient-dropdown',
+        options=[{'label': 'None', 'value': 'None'}],
+        value=None
+    ),
+    dcc.Store(id='session', storage_type='session', data=None),
     dcc.Dropdown(
         id='organ-dropdown',
         options=[{'label': organ, 'value': organ} for organ in organs],
@@ -74,9 +80,8 @@ app.layout = html.Div([
     html.Div([
         dcc.Input(id='input-R', type='number', value=10, style={'marginRight': '10px'}),
         dcc.Input(id='input-mutation-count', type='number', value=0, style={'marginRight': '10px'}),
-        dcc.Input(id='patient', type='text', value='PD3890a'),
     ], style={'display': 'flex', 'justifyContent': 'center', 'padding': '10px'}),
-
+    html.Button('Wyczyść dane', id='clear-button'),
 
     html.Div(id='slider-output-container'),
     dcc.Graph(id='bar-plot-crossvalid'),

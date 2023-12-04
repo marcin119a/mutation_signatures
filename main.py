@@ -4,30 +4,39 @@ import numpy as np
 from utils import calculate_BIC
 
 if __name__ == '__main__':
-    tumorBRCA = np.genfromtxt('data/counts_119breast.csv', delimiter=',', skip_header=1)
-    patients = np.genfromtxt('data/counts_119breast.csv', delimiter=',', max_rows=1, dtype=str)[1:]
+    tumorBRCA = np.genfromtxt('data/tumorBRCA.csv', delimiter=',', skip_header=1)
+    patients = np.genfromtxt('data/tumorBRCA.csv', delimiter=',', max_rows=1, dtype=str)[1:]
     tumorBRCA = np.delete(tumorBRCA, 0, axis=1)
     signaturesCOSMIC = np.genfromtxt('data/signaturesCOSMIC.csv', delimiter=',', skip_header=1)
     signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)
-    first_col = tumorBRCA[:, 0]
+    first_col = tumorBRCA[:, 0:30]
 
     #res = decomposeQP(first_col, signaturesCOSMIC)
 
-    exposures, errors = findSigExposures(first_col.reshape(first_col.shape[0], 1), signaturesCOSMIC, decomposition_method=decomposeQP)
-    print(exposures, errors)
+    #exposures, errors = findSigExposures(first_col.reshape(first_col.shape[0], 1), signaturesCOSMIC, decomposition_method=decomposeQP)
+    #print(exposures, errors)
     #print(exposures.shape, errors.shape)
     #np.savetxt('output/exposures.csv', exposures, delimiter=',', header=','.join(patients))
 
     #np.savetxt('output/errors.csv', errors, delimiter=',')
     #print(calculate_BIC(signaturesCOSMIC, exposures, errors))
+    import cProfile
 
-    exposures, errors = bootstrapSigExposures(first_col, signaturesCOSMIC, 16, 2000)
-    np.savetxt('output/bootstrap_exposures.csv', exposures, delimiter=',')
+    profiler = cProfile.Profile()
+    profiler.enable()
 
-    np.savetxt('output/bootstrap_errors.csv', errors, delimiter=',')
-    fold_size = 5
-    exposures, errors = crossValidationSigExposures(first_col, signaturesCOSMIC, fold_size, decomposition_method=decomposeQP)
-    np.savetxt('output/cross_valid_exposures.csv', exposures, delimiter=',')
+    result_exposures = runCrossvaldiationOnMatrix(tumorBRCA, signaturesCOSMIC, threshold=0.01)
 
-    np.savetxt('output/cross_valid_errors.csv', errors, delimiter=',')
+    np.savetxt('output/perturbed_patient2.csv', result_exposures.sum(axis=1), delimiter=',')
+    profiler.disable()
+    profiler.dump_stats("output/profile_results2.prof")
+    #exposures, errors = bootstrapSigExposures(first_col, signaturesCOSMIC, 16, 2000)
+    #np.savetxt('output/bootstrap_exposures.csv', exposures, delimiter=',')
+
+    #np.savetxt('output/bootstrap_errors.csv', errors, delimiter=',')
+    #fold_size = 5
+    #exposures, errors = crossValidationSigExposures(first_col, signaturesCOSMIC, fold_size, decomposition_method=decomposeQP)
+    #np.savetxt('output/cross_valid_exposures.csv', exposures, delimiter=',')
+
+    #np.savetxt('output/cross_valid_errors.csv', errors, delimiter=',')
 

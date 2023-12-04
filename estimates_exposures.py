@@ -114,9 +114,8 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
     K = len(m)  # number of mutation types
 
     def bootstrap_sample(m, mutation_count, K):
-        mutations_sampled = random.choices(range(m.shape[0]), k=mutation_count, weights=m)
-        m_sampled = {k: mutations_sampled.count(k) / mutation_count for k in range(0, K)}
-        return list(m_sampled.values())
+        mutations_sampled = np.random.choice(K, size=mutation_count, p=m)
+        return np.bincount(mutations_sampled, minlength=K) / mutation_count
 
     exposures = np.column_stack([
         decomposition_method(bootstrap_sample(m, mutation_count, K), P) for _ in range(R)
@@ -201,3 +200,21 @@ def crossValidationSigExposures(m, P, fold_size, shuffle=True, decomposition_met
 
     return fold_exposures, errors
 
+
+def runBootstrapOnMatrix(M, P, R, mutation_count= 1000,  threshold=0.01):
+    def process_column(column):
+        exposures, errors = bootstrapSigExposures(column, P, R, mutation_count)
+        return exposures > threshold
+
+    all_exposures = np.apply_along_axis(process_column, 0, M)
+
+    return all_exposures
+
+def runCrossvaldiationOnMatrix(M, P, fold_size=4, threshold=0.01):
+    def process_column(column):
+        exposures, errors = crossValidationSigExposures(column, P, fold_size, shuffle=True)
+        return exposures > threshold
+
+    all_exposures = np.apply_along_axis(process_column, 0, M)
+
+    return all_exposures

@@ -10,8 +10,7 @@ def parse_contents(contents, filename):
     decoded = base64.b64decode(content_string)
     try:
         if 'csv' in filename:
-            # Case for CSV file
-            data = np.genfromtxt(io.StringIO(decoded.decode('utf-8')), delimiter=',', skip_header=1)
+            data = np.genfromtxt(io.StringIO(decoded.decode('utf-8')), delimiter=',', skip_header=1, dtype=float)[:, 1:]
             patients = np.genfromtxt(io.StringIO(decoded.decode('utf-8')), delimiter=',', max_rows=1, dtype=str)[1:]
             patients = np.char.strip(patients, '"')
         else:

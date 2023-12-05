@@ -1,4 +1,4 @@
-from web.layout import app
+from web.callback import app
 
 
 # Run the application

@@ -1,7 +1,7 @@
 import numpy as np
 from decompose import decomposeQP
 from utils import FrobeniusNorm, is_wholenumber
-import random
+
 
 def findSigExposures(M, P, decomposition_method=decomposeQP):
     """

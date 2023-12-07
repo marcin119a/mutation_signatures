@@ -1,6 +1,6 @@
 import dash
 from dash import dcc, html
-
+import dash_daq as daq
 
 # Initialize Dash application
 app = dash.Dash(__name__)
@@ -24,7 +24,7 @@ app.layout = html.Div([
             id='upload-data',
             children=html.Div(['Drag and Drop or ', html.A('Select Files')]),
             style={
-                'width': '100%',
+                'width': '300px',
                 'height': '60px',
                 'lineHeight': '60px',
                 'borderWidth': '1px',
@@ -34,19 +34,48 @@ app.layout = html.Div([
                 'margin': '10px'
             },
             multiple=False
-        )
+        ),
+        dcc.Store(id='session', storage_type='session', data=None),
+        daq.BooleanSwitch(
+                id='dropdown-switch',
+                on=False,
+                label='Choose Organ',
+                labelPosition='top',
+        ),
+        dcc.Dropdown(
+            id='organ-dropdown',
+            options=[{'label': organ, 'value': organ} for organ in organs],
+            value='Breast',
+            style={
+                'width': '50%',
+                'height': '60px',
+                'lineHeight': '60px',
+                'borderWidth': '1px',
+                'borderStyle': 'dashed',
+                'borderRadius': '5px',
+                'textAlign': 'center',
+                'margin': '10px'
+            },
+        ),
+        html.Div(id='upload-message',
+                 style={
+                     'width': '50%',
+                     'height': '60px',
+                     'lineHeight': '60px',
+                     'borderWidth': '1px',
+                     'borderStyle': 'line',
+                     'borderRadius': '5px',
+                     'textAlign': 'center',
+                     'margin': '10px'
+                 },
+        ),
     ], style={'display': 'flex', 'justifyContent': 'center'}),
-    html.Div(id='upload-message'),
+
+
     dcc.Dropdown(
         id='patient-dropdown',
         options=[{'label': 'None', 'value': 'None'}],
         value=None
-    ),
-    dcc.Store(id='session', storage_type='session', data=None),
-    dcc.Dropdown(
-        id='organ-dropdown',
-        options=[{'label': organ, 'value': organ} for organ in organs],
-        value='Breast'
     ),
     html.Div([
         dcc.Dropdown(
@@ -58,6 +87,7 @@ app.layout = html.Div([
                 {'label': 'COSMIC_v3.1_SBS_GRCh37.txt', 'value': 'COSMIC_v3.1_SBS_GRCh37.txt'},
                 {'label': 'COSMIC_v3.4_SBS_GRCh37.txt', 'value': 'COSMIC_v3.4_SBS_GRCh37.txt'},
             ],
+            disabled=True,
             value='signaturesCOSMIC.csv'
         ),
         dcc.Dropdown(

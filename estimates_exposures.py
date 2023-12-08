@@ -201,20 +201,3 @@ def crossValidationSigExposures(m, P, fold_size, shuffle=True, decomposition_met
     return fold_exposures, errors
 
 
-def runBootstrapOnMatrix(M, P, R, mutation_count= 1000,  threshold=0.01):
-    def process_column(column):
-        exposures, errors = bootstrapSigExposures(column, P, R, mutation_count)
-        return exposures > threshold
-
-    all_exposures = np.apply_along_axis(process_column, 0, M)
-
-    return all_exposures
-
-def runCrossvaldiationOnMatrix(M, P, fold_size=4, threshold=0.01):
-    def process_column(column):
-        exposures, errors = crossValidationSigExposures(column, P, fold_size, shuffle=True)
-        return exposures > threshold
-
-    all_exposures = np.apply_along_axis(process_column, 0, M)
-
-    return all_exposures

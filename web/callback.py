@@ -3,6 +3,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from web.uploader import parse_contents, load_signatures, load_names
 from estimates_exposures import bootstrapSigExposures, crossValidationSigExposures, findSigExposures
+from model_selection import backward_elimination
 import numpy as np
 from utils import is_wholenumber
 from dash import Input, Output, State
@@ -36,6 +37,7 @@ def update_output(contents, organ, filename):
 @app.callback(
     [Output('bar-plot-crossvalid', 'figure'),
      Output('bar-plot-bootstrap', 'figure'),
+     Output('bar-plot-modelselection', 'figure'),
      Output('input-mutation-count', 'value'),
      ],
     [
@@ -106,7 +108,23 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
             yaxis_title='Signature contribution'
         )
 
-        return fig_cross, fig_bootstrap, mutation_count
+        bootstrap_r, decompos_r = backward_elimination(patient_column, signatures, R=R, significance_level=0.01)
+
+        fig_model_selection = px.strip(x=range(1, decompos_r[0].shape[0] + 1),
+                                 y=decompos_r[0].squeeze(),
+                                 stripmode='overlay')
+        for i in range(bootstrap_r[0].shape[0]):
+            fig_model_selection.add_trace(go.Box(
+                y=bootstrap_r[0][i, :],
+                name=f'Sig {sigsBRCA[i] + 1}'))
+
+        fig_model_selection.update_layout(
+            title=f'Model selection signatures for  {patient}',
+            xaxis_title='Sig',
+            yaxis_title='Signature contribution'
+        )
+
+        return fig_cross, fig_bootstrap, fig_model_selection, mutation_count
     else:
         return None, None, 0
 

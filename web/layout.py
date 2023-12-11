@@ -115,5 +115,6 @@ app.layout = html.Div([
 
     html.Div(id='slider-output-container'),
     dcc.Graph(id='bar-plot-crossvalid'),
-    dcc.Graph(id='bar-plot-bootstrap')
+    dcc.Graph(id='bar-plot-bootstrap'),
+    dcc.Graph(id='bar-plot-modelselection'),
 ])

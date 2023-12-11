@@ -1,5 +1,6 @@
 import numpy as np
-from estimates_exposures import bootstrapSigExposures, crossValidationSigExposures
+from estimates_exposures import bootstrapSigExposures, crossValidationSigExposures, findSigExposures
+
 def runBootstrapOnMatrix(M, P, R, mutation_count= 1000, threshold=0.01):
     def process_column(column):
         exposures, errors = bootstrapSigExposures(column, P, R, mutation_count)
@@ -8,6 +9,7 @@ def runBootstrapOnMatrix(M, P, R, mutation_count= 1000, threshold=0.01):
     all_exposures = np.apply_along_axis(process_column, 0, M)
 
     return 1 - all_exposures.sum(axis=1) / all_exposures.shape[1]
+
 
 def runCrossvaldiationOnMatrix(M, P, fold_size=4, threshold=0.01):
     def process_column(column):
@@ -18,9 +20,9 @@ def runCrossvaldiationOnMatrix(M, P, fold_size=4, threshold=0.01):
 
     return 1 - all_exposures.sum(axis=1) / all_exposures.shape[1]
 
-def backward_elimination(m, P, significance_level=0.05):
+
+def backward_elimination(m, P, R, significance_level=0.05):
     best_columns = np.arange(P.shape[1])
-    R = 10
     P_temp = P
     while True:
         changed = False
@@ -37,9 +39,7 @@ def backward_elimination(m, P, significance_level=0.05):
         if not changed:
             break
 
-
-
-    return best_columns
+    return bootstrapSigExposures(m, P_temp, R=R), findSigExposures(m.reshape(m.shape[0], 1), P_temp)
 
 if __name__ == '__main__':
     tumorBRCA = np.genfromtxt('data/counts_119breast.csv', delimiter=',', skip_header=1)
@@ -50,5 +50,5 @@ if __name__ == '__main__':
     first_col = tumorBRCA[:, 0]
     spec = [ x-1 for x in  [1, 2, 3, 5, 6, 8, 13, 17, 18, 20, 26, 30]]
 
-    result_exposures = backward_elimination(first_col, signaturesCOSMIC[:,spec], significance_level=0.01)
-    print(result_exposures.shape)
+    result_exposures = backward_elimination(first_col, signaturesCOSMIC, R=10, significance_level=0.01)
+    print(result_exposures[0][0].shape)

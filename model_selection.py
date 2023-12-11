@@ -7,7 +7,7 @@ def runBootstrapOnMatrix(M, P, R, mutation_count= 1000, threshold=0.01):
 
     all_exposures = np.apply_along_axis(process_column, 0, M)
 
-    return all_exposures.sum(axis=1) / all_exposures.shape[1]
+    return 1 - all_exposures.sum(axis=1) / all_exposures.shape[1]
 
 def runCrossvaldiationOnMatrix(M, P, fold_size=4, threshold=0.01):
     def process_column(column):
@@ -16,7 +16,7 @@ def runCrossvaldiationOnMatrix(M, P, fold_size=4, threshold=0.01):
 
     all_exposures = np.apply_along_axis(process_column, 0, M)
 
-    return all_exposures.sum(axis=1) / all_exposures.shape[1]
+    return 1 - all_exposures.sum(axis=1) / all_exposures.shape[1]
 
 def backward_elimination(m, P, significance_level=0.05):
     best_columns = np.arange(P.shape[1])
@@ -31,6 +31,7 @@ def backward_elimination(m, P, significance_level=0.05):
             max_p_var = p_values.argmax()
             best_columns = np.delete(best_columns, max_p_var)
             P_temp = P[:, best_columns]
+
             changed = True
 
         if not changed:
@@ -41,12 +42,13 @@ def backward_elimination(m, P, significance_level=0.05):
     return best_columns
 
 if __name__ == '__main__':
-    tumorBRCA = np.genfromtxt('data/tumorBRCA.csv', delimiter=',', skip_header=1)
-    patients = np.genfromtxt('data/tumorBRCA.csv', delimiter=',', max_rows=1, dtype=str)[1:]
+    tumorBRCA = np.genfromtxt('data/counts_119breast.csv', delimiter=',', skip_header=1)
+    patients = np.genfromtxt('data/counts_119breast.csv', delimiter=',', max_rows=1, dtype=str)[1:]
     tumorBRCA = np.delete(tumorBRCA, 0, axis=1)
     signaturesCOSMIC = np.genfromtxt('data/signaturesCOSMIC.csv', delimiter=',', skip_header=1)
     signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)
     first_col = tumorBRCA[:, 0]
+    spec = [ x-1 for x in  [1, 2, 3, 5, 6, 8, 13, 17, 18, 20, 26, 30]]
 
-    result_exposures = backward_elimination(first_col, signaturesCOSMIC, significance_level=0.01)
+    result_exposures = backward_elimination(first_col, signaturesCOSMIC[:,spec], significance_level=0.01)
     print(result_exposures.shape)

@@ -1,5 +1,6 @@
 from decompose import decomposeQP
 from estimates_exposures import *
+from model_selection import *
 import numpy as np
 from utils import calculate_BIC
 

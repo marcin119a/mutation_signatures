@@ -81,7 +81,7 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
         for i in range(exposures_cv.shape[0]):
             fig_cross.add_trace(go.Box(
                 y=exposures_cv[i, :],
-                name=f'Sig {sigsBRCA[i]}'))
+                name=f'Sig {sigsBRCA[i] + 1}'))
 
         fig_cross.update_layout(
             title=f'Cross valid for {patient}',
@@ -98,7 +98,7 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
         for i in range(exposures_bt.shape[0]):
             fig_bootstrap.add_trace(go.Box(
                 y=exposures_bt[i, :],
-                name=f'Sig {sigsBRCA[i]}'))
+                name=f'Sig {sigsBRCA[i] + 1}'))
 
         fig_bootstrap.update_layout(
             title=f'Bootstrap for {patient}',

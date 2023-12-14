@@ -45,3 +45,4 @@ def decomposeQP(m, P):
 
     # return the exposures
     return exposures
+

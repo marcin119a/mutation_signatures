@@ -26,7 +26,7 @@ def backward_elimination(m, P, R, significance_level=0.05):
     P_temp = P
     while True:
         changed = False
-        p_values = runBootstrapOnMatrix(m, P_temp, R, mutation_count=1000, threshold=0.01)
+        p_values = runBootstrapOnMatrix(m, P_temp, R, mutation_count=1000, threshold=0.05)
 
         max_p_value = p_values.max()
         if max_p_value > significance_level:
@@ -39,8 +39,46 @@ def backward_elimination(m, P, R, significance_level=0.05):
         if not changed:
             break
 
-    return bootstrapSigExposures(m, P_temp, R=R), findSigExposures(m.reshape(m.shape[0], 1), P_temp)
+    return best_columns, bootstrapSigExposures(m, P_temp, mutation_count=1000, R=R), findSigExposures(m.reshape(m.shape[0], 1), P_temp)
 
+
+def forward_elimination(m, P, R, significance_level=0.05):
+    best_columns = [1]
+    P_temp = np.zeros((P.shape[0], 0))
+    while True:
+        changed = False
+        best_p_value = 1
+        best_p_var = -1
+
+        for i in range(P.shape[1]-1, 0, -1):
+            if i in best_columns:
+                continue
+
+            # Try adding the ith column to the model
+            P_temp_with_i = np.hstack([P_temp, P[:, [i]]])
+            p_values = runBootstrapOnMatrix(m, P_temp_with_i, R, mutation_count=1000, threshold=0.05)
+
+            # Check if the new variable is significant and better than the current best
+            if p_values[-1] < best_p_value and p_values[-1] < significance_level:
+                best_p_value = p_values[-1]
+                best_p_var = i
+
+        # If a significant variable was found, add it to the model
+        if best_p_var != -1:
+            best_columns.append(best_p_var)
+            P_temp = np.hstack([P_temp, P[:, [best_p_var]]])
+            changed = True
+            print(best_columns)
+
+        # Stop if no new significant variable was found
+        if not changed:
+            break
+
+    return best_columns, bootstrapSigExposures(m, P_temp, mutation_count=1000, R=R), findSigExposures(m.reshape(m.shape[0], 1), P_temp)
+
+
+
+#to test
 if __name__ == '__main__':
     tumorBRCA = np.genfromtxt('data/counts_119breast.csv', delimiter=',', skip_header=1)
     patients = np.genfromtxt('data/counts_119breast.csv', delimiter=',', max_rows=1, dtype=str)[1:]
@@ -50,5 +88,4 @@ if __name__ == '__main__':
     first_col = tumorBRCA[:, 0]
     spec = [ x-1 for x in  [1, 2, 3, 5, 6, 8, 13, 17, 18, 20, 26, 30]]
 
-    result_exposures = backward_elimination(first_col, signaturesCOSMIC, R=10, significance_level=0.01)
-    print(result_exposures[0][0].shape)
+    _, _, _ = forward_elimination(first_col, signaturesCOSMIC, R=10, significance_level=0.01)

@@ -3,11 +3,12 @@ import plotly.graph_objects as go
 import plotly.express as px
 from web.uploader import parse_contents, load_signatures, load_names
 from estimates_exposures import bootstrapSigExposures, crossValidationSigExposures, findSigExposures
-from model_selection import backward_elimination
+from model_selection import forward_elimination, backward_elimination
 import numpy as np
 from utils import is_wholenumber
 from dash import Input, Output, State
 import dash
+
 
 
 @app.callback(
@@ -38,6 +39,7 @@ def update_output(contents, organ, filename):
     [Output('bar-plot-crossvalid', 'figure'),
      Output('bar-plot-bootstrap', 'figure'),
      Output('bar-plot-modelselection', 'figure'),
+     Output('bar-plot-forward_model', 'figure'),
      Output('input-mutation-count', 'value'),
      ],
     [
@@ -61,7 +63,7 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
 
         if mutation_count == 0:
             if all(is_wholenumber(val) for val in patient_column):
-                mutation_count = int(patient_column.sum())
+                mutation_count = patient_column.sum()
         else:
             mutation_count = 1000
 
@@ -108,7 +110,7 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
             yaxis_title='Signature contribution'
         )
 
-        bootstrap_r, decompos_r = backward_elimination(patient_column, signatures, R=R, significance_level=0.01)
+        best_signatures, bootstrap_r, decompos_r = backward_elimination(patient_column, signatures, R=100, significance_level=0.05)
 
         fig_model_selection = px.strip(x=range(1, decompos_r[0].shape[0] + 1),
                                  y=decompos_r[0].squeeze(),
@@ -116,15 +118,32 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
         for i in range(bootstrap_r[0].shape[0]):
             fig_model_selection.add_trace(go.Box(
                 y=bootstrap_r[0][i, :],
-                name=f'Sig {sigsBRCA[i] + 1}'))
+                name=f'Sig {best_signatures[i] + 1}'))
 
         fig_model_selection.update_layout(
-            title=f'Model selection signatures for  {patient}',
+            title=f'Backward elimination signatures for  {patient}',
             xaxis_title='Sig',
             yaxis_title='Signature contribution'
         )
 
-        return fig_cross, fig_bootstrap, fig_model_selection, mutation_count
+        best_signatures, bootstrap_r, decompos_r = forward_elimination(patient_column, signatures, R=100,
+                                                                        significance_level=0.05)
+
+        fig_model_selection_forward = px.strip(x=range(1, decompos_r[0].shape[0] + 1),
+                                       y=decompos_r[0].squeeze(),
+                                       stripmode='overlay')
+        for i in range(bootstrap_r[0].shape[0]):
+            fig_model_selection_forward.add_trace(go.Box(
+                y=bootstrap_r[0][i, :],
+                name=f'Sig {best_signatures[i] + 1}'))
+
+        fig_model_selection_forward.update_layout(
+            title=f'Forward elimination selection signatures for  {patient}',
+            xaxis_title='Sig',
+            yaxis_title='Signature contribution'
+        )
+
+        return fig_cross, fig_bootstrap, fig_model_selection, fig_model_selection_forward, mutation_count
     else:
         return None, None, 0
 

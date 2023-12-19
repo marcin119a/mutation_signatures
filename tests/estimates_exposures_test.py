@@ -1,48 +1,71 @@
 import unittest
-import numpy as np
 from estimates_exposures import *
+from utils import load_and_process_data
 
 class TestEstimateExposures(unittest.TestCase):
     def test_findSigExposures(self):
-        M = np.array([[0.5, 0.3, 0.2], [0.5, 0.3, 0.2], [0.5, 0.3, 0.2]])
+        M = np.array([[0.5, 0.3, 0.2], [0.9, 0.05, 0.05], [0.7, 0.1, 0.2]])
         P = np.array([[0.2, 0.3, 0.5], [0.1, 0.4, 0.5], [0.3, 0.1, 0.6]])
 
-        result = findSigExposures(M, P)
+        exposures, errors = findSigExposures(M, P)
+        #data obtaining from R code
+        expected_exposures = np.array([
+            [0.2007233, 0.4317862, 0.6437908],
+            [0.4755877, 0.2883263, 0.0000000],
+            [0.3236890, 0.2798875, 0.3562092]
+        ])
+        expected_errors = np.array([
+            0.1245907, 0.4137049, 0.1939068]
+        )
 
-        expected_exposures = np.array([[0.6097561, 0.3902439], [0.6097561, 0.3902439], [0.6097561, 0.3902439]])
-        expected_errors = np.array([0.08049845, 0.08049845, 0.08049845])
+        np.testing.assert_array_almost_equal(exposures, expected_exposures, decimal=7)
+        np.testing.assert_array_almost_equal(errors, expected_errors, decimal=7)
 
-        np.testing.assert_array_almost_equal(result['exposures'], expected_exposures, decimal=7)
-        np.testing.assert_array_almost_equal(result['errors'], expected_errors, decimal=7)
+    def test_findSigExposuresReal(self):
+        profile, signatures = load_and_process_data(None,
+                                                         'data/tumorBRCA.csv',
+                                                         'data/signaturesCOSMIC.csv')
 
+        exposures, errors = findSigExposures(profile, signatures)
+        expected_exposures = np.genfromtxt('data/R_exposures.csv', delimiter=',', skip_header=1)
+        expected_exposures = np.delete(expected_exposures, 0, axis=1).squeeze()
+        expected_errors = np.genfromtxt('data/R_errors.csv', delimiter=',', skip_header=1)
+        expected_errors = np.delete(expected_errors, 0, axis=1).squeeze()
 
-class TestBootstrapSample(unittest.TestCase):
+        np.testing.assert_array_almost_equal(exposures, expected_exposures, decimal=7)
+        np.testing.assert_array_almost_equal(errors, expected_errors, decimal=7)
+class TestBootstrapSigExposures(unittest.TestCase):
     def test_bootstrap_sample(self):
         m = np.array([0.5, 0.3, 0.2])
-        mutation_count = 100
-        K = len(m)
+        P = np.array([[0.2, 0.3, 0.5], [0.1, 0.4, 0.5], [0.3, 0.1, 0.6]])
 
-        result = bootstrap_sample(m, mutation_count, K)
+        expected_exposures = np.array(
+            [[0.1025316, 0.2443038, 0.0481013],
+            [0.664557, 0.4797468, 0.7065823],
+            [0.2329114, 0.2759494, 0.2453165]]
+        )
 
-        # Sprawdzenie, czy wynik to lista z K elementami, a suma tych elementów wynosi mutation_count
-        self.assertIsInstance(result, list)
-        self.assertEqual(len(result), K)
-        self.assertEqual(sum(result), mutation_count)
+        np.random.seed(42)
+
+        exposures, errors = bootstrapSigExposures(m, mutation_count=100, R=3, P=P)
+
+        np.testing.assert_array_almost_equal(exposures, expected_exposures, decimal=7)
 
 
-class TestBootstrapSigExposures(unittest.TestCase):
+class TestCrossValidationSigExposures(unittest.TestCase):
 
-    def test_bootstrapSigExposures(self):
+    def test_crossvalidation(self):
         m = np.array([0.5, 0.3, 0.2])
         P = np.array([[0.2, 0.3, 0.5], [0.1, 0.4, 0.5], [0.3, 0.1, 0.6]])
-        R = 1000
-        mutation_count = 10
+        np.random.seed(42)
+        expected_exposures = np.array([
+            [0.0886076, 0.6764706, 0.],
+            [0.5594937, 0., 0.9583333],
+            [0.3518987, 0.3235294, 0.0416667]]
+        )
 
-        result = bootstrapSigExposures(m, P, R, mutation_count)
-        print("Exposures:")
-        print(result['exposures'])
-        print("Errors:")
-        print(result['errors'])
+        exposures, errors = crossValidationSigExposures(m, P, fold_size=1)
+        np.testing.assert_array_almost_equal(exposures, expected_exposures, decimal=7)
 
 if __name__ == '__main__':
     unittest.main()

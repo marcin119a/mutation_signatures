@@ -3,7 +3,7 @@ from scipy.optimize import minimize
 from utils import FrobeniusNorm
 import quadprog
 
-def decomposeQPOLD(m, P):
+def decomposeQPScipy(m, P):
     N = P.shape[1]
 
     def objective(E):
@@ -12,7 +12,9 @@ def decomposeQPOLD(m, P):
     constraints = ({'type': 'eq', 'fun': lambda E: np.array([np.sum(E) - 1])})
     bounds = [(0, None)] * N
 
-    out = minimize(objective, np.zeros(N), method='SLSQP', bounds=bounds, constraints=constraints, options={'maxiter': 10, 'disp': True})
+    out = minimize(
+        objective, x0=np.zeros(N), method='SLSQP', bounds=bounds, constraints=constraints)
+
 
     exposures = out.x
     exposures[exposures < 0] = 0
@@ -45,4 +47,21 @@ def decomposeQP(m, P):
 
     # return the exposures
     return exposures
+
+from sklearn.linear_model import Ridge
+def decomposeQ(m, P):
+    def objective_function(beta, X, y):
+        return np.sum((y - X.dot(beta)) ** 2) + alpha * np.sum(beta ** 2)
+
+    ridge_model = Ridge(alpha=0)  # alpha is the regularization parameter
+    ridge_model.fit(P, m)
+    ridge_coefficients = ridge_model.coef_
+    # Initial values of the coefficients
+    beta_initial = ridge_coefficients
+
+    # Optimization with constraints
+    alpha = 0  # Adjustment parameter, as in the ridge regression
+    result = minimize(objective_function, beta_initial, args=(P, m))
+
+    return result.x
 

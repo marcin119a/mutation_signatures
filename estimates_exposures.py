@@ -95,8 +95,8 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
 
     if len(m) != P.shape[0]:
         raise ValueError("Length of vector 'm' and number of rows of matrix 'P' must be the same.")
-    #if not np.all(np.array(list(m.keys())) == P.shape[0]):
-    #    raise ValueError("Elements of vector 'm' and rows of matrix 'P' must have the same names (mutations types).")
+    if m.shape[0] != P.shape[0]:
+        raise ValueError("Elements of vector 'm' and rows of matrix 'P' must have the same names (mutations types).")
     #if P.shape[1] == 1:
     #    raise ValueError("Matrices 'P' must have at least 2 columns (signatures).")
 

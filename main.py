@@ -2,15 +2,13 @@ from decompose import decomposeQP
 from estimates_exposures import *
 from model_selection import *
 import numpy as np
-from utils import calculate_BIC
+from utils import *
 
 if __name__ == '__main__':
-    tumorBRCA = np.genfromtxt('data/tumorBRCA.csv', delimiter=',', skip_header=1)
-    patients = np.genfromtxt('data/tumorBRCA.csv', delimiter=',', max_rows=1, dtype=str)[1:]
-    tumorBRCA = np.delete(tumorBRCA, 0, axis=1)
-    signaturesCOSMIC = np.genfromtxt('data/signaturesCOSMIC.csv', delimiter=',', skip_header=1)
-    signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)
-    first_col = tumorBRCA[:, 0:30]
+    tumorBRCA, signaturesCOSMIC = load_and_process_data(None,
+                                                        'tests/data/tumorBRCA.csv',
+                                                        'tests/data/signaturesCOSMIC.csv')
+
 
     #res = decomposeQP(first_col, signaturesCOSMIC)
 
@@ -21,16 +19,10 @@ if __name__ == '__main__':
 
     #np.savetxt('output/errors.csv', errors, delimiter=',')
     #print(calculate_BIC(signaturesCOSMIC, exposures, errors))
-    import cProfile
-
-    profiler = cProfile.Profile()
-    profiler.enable()
 
     result_exposures = runCrossvaldiationOnMatrix(tumorBRCA, signaturesCOSMIC, threshold=0.01)
 
     np.savetxt('output/perturbed_patient2.csv', result_exposures.sum(axis=1), delimiter=',')
-    profiler.disable()
-    profiler.dump_stats("output/profile_results2.prof")
     #exposures, errors = bootstrapSigExposures(first_col, signaturesCOSMIC, 16, 2000)
     #np.savetxt('output/bootstrap_exposures.csv', exposures, delimiter=',')
 

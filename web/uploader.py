@@ -32,7 +32,7 @@ def load_signatures(filename, organ=False):
         file_path = f"../data/signatures_organ/latest/{filename}_Signature.csv"
     else:
         delimiter = '\t' if '.txt' in filename else ','
-        file_path = f'../data/{filename}'
+        file_path = f'data/{filename}'
     signatures = np.genfromtxt(file_path, delimiter=delimiter, skip_header=1)
 
     return np.delete(signatures, 0, axis=1)

@@ -38,12 +38,12 @@ def runCrossvaldiationOnMatrix(
 
 
 def backward_elimination(
-    m, P, R, significance_level=0.05, decomposition_method=decomposeQP
+    m, P, R, threshold, mutation_count, significance_level, decomposition_method=decomposeQP
 ):
     best_columns = np.arange(P.shape[1])
     P_temp = P
     model_error, _ = findSigExposures(
-        m.reshape(m.shape[0], 1), P_temp, decomposition_method
+        m.reshape(-1, 1), P_temp, decomposition_method
     )
     while True:
         changed = False
@@ -51,8 +51,8 @@ def backward_elimination(
             m,
             P_temp,
             R,
-            mutation_count=1000,
-            threshold=0.05,
+            mutation_count=mutation_count,
+            threshold=threshold,
             decomposition_method=decomposition_method,
         )
 
@@ -62,7 +62,7 @@ def backward_elimination(
             best_columns = np.delete(best_columns, max_p_var)
             P_temp = P[:, best_columns]
             exposures, errors = findSigExposures(
-                m.reshape(m.shape[0], 1),
+                m.reshape(-1, 1),
                 P_temp,
                 decomposition_method=decomposition_method,
             )
@@ -83,14 +83,14 @@ def backward_elimination(
             decomposition_method=decomposition_method,
         ),
         findSigExposures(
-            m.reshape(m.shape[0], 1), P_temp, decomposition_method=decomposition_method
+            m.reshape(-1, 1), P_temp, decomposition_method=decomposition_method
         ),
     )
 
 
 
 def forward_elimination(
-    m, P, R, significance_level=0.05, decomposition_method=decomposeQP
+    m, P, R, threshold, mutation_count, significance_level, decomposition_method=decomposeQP
 ):
     best_columns = [1]
     P_temp = np.zeros((P.shape[0], 0))

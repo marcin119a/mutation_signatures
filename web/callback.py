@@ -109,8 +109,7 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
             yaxis_title='Signature contribution'
         )
 
-        best_signatures, bootstrap_r, decompos_r = backward_elimination(patient_column, signatures, R=100,
-                                                                        significance_level=0.05)
+        best_signatures, bootstrap_r, decompos_r = backward_elimination(patient_column, signatures, R=1000, significance_level=0.01)
 
         fig_model_selection = px.strip(x=range(1, decompos_r[0].shape[0] + 1),
                                  y=decompos_r[0].squeeze(),
@@ -126,9 +125,9 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
             yaxis_title='Signature contribution'
         )
         from decompose import decomposeQ
-        best_signatures, bootstrap_r, decompos_r = backward_elimination(patient_column, signatures, R=100,
-                                                                        significance_level=0.05,
-                                                                        decomposition_method=decomposeQ)
+        #best_signatures, bootstrap_r, decompos_r = backward_elimination(patient_column, signatures, R=100,
+        #                                                                significance_level=0.05,
+        #                                                                decomposition_method=decomposeQ)
 
         fig_model_selection_forward = px.strip(x=range(1, decompos_r[0].shape[0] + 1),
                                        y=decompos_r[0].squeeze(),

@@ -142,12 +142,12 @@ def forward_elimination(
 
 #to test
 if __name__ == '__main__':
-    tumorBRCA = np.genfromtxt('data/counts_119breast.csv', delimiter=',', skip_header=1)
-    patients = np.genfromtxt('data/counts_119breast.csv', delimiter=',', max_rows=1, dtype=str)[1:]
+    tumorBRCA = np.genfromtxt('output/M.csv', delimiter=',', skip_header=1)
+    patients = np.genfromtxt('output/M.csv', delimiter=',', max_rows=1, dtype=str)[1:]
     tumorBRCA = np.delete(tumorBRCA, 0, axis=1)
-    signaturesCOSMIC = np.genfromtxt('tests/data/signaturesCOSMIC.csv', delimiter=',', skip_header=1)
+    signaturesCOSMIC = np.genfromtxt('output/signatures.csv', delimiter=',', skip_header=1)
     signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)
-    first_col = tumorBRCA[:, 0]
-    spec = [ x-1 for x in  [1, 2, 3, 5, 6, 8, 13, 17, 18, 20, 26, 30]]
+    first_col = tumorBRCA[:, 1]
 
-    _, _, _ = backward_elimination(first_col, signaturesCOSMIC, R=10, significance_level=0.01)
+    a, b, c = backward_elimination(first_col, signaturesCOSMIC, threshold=0.01, mutation_count=1000, R=10, significance_level=0.01)
+    print(a)

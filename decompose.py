@@ -47,8 +47,11 @@ def decomposeQP(m, P):
 
     # return the exposures
     return exposures
+def decomposeQ(m, P):
+    pass
 
-from sklearn.linear_model import Ridge
+"""
+#from sklearn.linear_model import Ridge
 def decomposeQ(m, P):
     def objective_function(beta, X, y):
         return np.sum((y - X.dot(beta)) ** 2) + alpha * np.sum(beta ** 2)
@@ -64,4 +67,4 @@ def decomposeQ(m, P):
     result = minimize(objective_function, beta_initial, args=(P, m))
 
     return result.x
-
+"""

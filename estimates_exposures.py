@@ -103,12 +103,13 @@ def bootstrapSigExposures(m, P, R, mutation_count=None, decomposition_method=dec
     # If 'mutation_count' is not specified, 'm' has to contain counts
     if mutation_count is None:
         if all(is_wholenumber(val) for val in m):
-            mutation_count = m.sum()
+            mutation_count = int(m.sum())
         else:
             raise ValueError("Please specify the parameter 'mutation_count' in the function call or provide mutation counts in parameter 'm'.")
 
     # Normalize m to be a vector of probabilities.
     m = m / np.sum(m)
+
     # Find optimal solutions using provided decomposition method for each bootstrap replicate
     # Matrix of signature exposures per replicate (column)
     K = len(m)  # number of mutation types

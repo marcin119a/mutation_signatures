@@ -4,7 +4,7 @@ from utils import calculate_BIC
 from decompose import decomposeQP
 
 def runBootstrapOnMatrix(
-    M, P, R, mutation_count=1000, threshold=0.01, decomposition_method=decomposeQP
+    M, P, R, mutation_count, threshold=0.01, decomposition_method=decomposeQP
 ):
     def process_column(column):
         exposures, errors = bootstrapSigExposures(
@@ -123,7 +123,7 @@ def forward_elimination(
         bootstrapSigExposures(
             m,
             P_temp,
-            mutation_count=1000,
+            mutation_count=mutation_count,
             R=R,
             decomposition_method=decomposition_method,
         ),
@@ -137,8 +137,9 @@ def forward_elimination(
 #to test
 if __name__ == '__main__':
     tumorBRCA = np.genfromtxt('output/M.csv', delimiter=',', skip_header=1)
-    patients = np.genfromtxt('output/M.csv', delimiter=',', max_rows=1, dtype=str)[1:]
     tumorBRCA = np.delete(tumorBRCA, 0, axis=1)
+    tumorBRCA = tumorBRCA[:,:100]
+
     signaturesCOSMIC = np.genfromtxt('data/signaturesProfiler.csv', delimiter=',', skip_header=1)
     signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)
     import pandas as pd
@@ -154,6 +155,6 @@ if __name__ == '__main__':
         indexes = non_zero_condition[non_zero_condition].index.tolist()
 
 
-        best_columns, b, c = backward_elimination(first_col, signaturesCOSMIC, threshold=0.01, mutation_count=1000, R=10, significance_level=0.01)
+        best_columns, b, c = backward_elimination(first_col, signaturesCOSMIC, threshold=0.01, mutation_count=None, R=20, significance_level=0.01)
         print(best_columns, indexes)
         print(sorted(best_columns) == sorted(indexes))

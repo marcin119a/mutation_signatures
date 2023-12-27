@@ -67,12 +67,13 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
         else:
             mutation_count = 1000
 
-        if boolean_on:
-            signatures = load_signatures(organ, organ=True)
-            sigsBRCA = load_names(organ)
-        else:
-            sigsBRCA = [x - 1 for x in signatures]
-            signatures = load_signatures(dropdown_value, organ=False)[:, sigsBRCA]
+        #if boolean_on:
+        #    signatures = load_signatures(organ, organ=True)
+        #    sigsBRCA = load_names(organ)
+        #else:
+        sigsBRCA = [x - 1 for x in signatures]
+
+        signatures = load_signatures(dropdown_value, organ=False)
 
         exposures, errors = findSigExposures(patient_column.reshape(patient_column.shape[0], 1), signatures)
 
@@ -85,7 +86,7 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
         for i in range(exposures_cv.shape[0]):
             fig_cross.add_trace(go.Box(
                 y=exposures_cv[i, :],
-                name=f'Sig {sigsBRCA[i] + 1}'))
+                name=f'Sig {i}'))
 
         fig_cross.update_layout(
             title=f'Cross valid for {patient}',
@@ -101,7 +102,7 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
         for i in range(exposures_bt.shape[0]):
             fig_bootstrap.add_trace(go.Box(
                 y=exposures_bt[i, :],
-                name=f'Sig {sigsBRCA[i] + 1}'))
+                name=f'Sig {i + 1}'))
 
         fig_bootstrap.update_layout(
             title=f'Bootstrap for {patient}',
@@ -109,7 +110,7 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
             yaxis_title='Signature contribution'
         )
 
-        best_signatures, bootstrap_r, decompos_r = backward_elimination(patient_column, signatures, threshold=0.001, mutation_count=1000, R=15, significance_level=0.01)
+        best_signatures, bootstrap_r, decompos_r = backward_elimination(patient_column, signatures, threshold=0.01, mutation_count=1000, R=R, significance_level=0.01)
 
         fig_model_selection = px.strip(x=range(1, decompos_r[0].shape[0] + 1),
                                  y=decompos_r[0].squeeze(),
@@ -120,9 +121,14 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
                 name=f'Sig {best_signatures[i] + 1}'))
 
         fig_model_selection.update_layout(
-            title=f'Backward elimination signatures for  {patient}',
+            title=f'Backward elimination selection signatures for {patient}',
             xaxis_title='Sig',
-            yaxis_title='Signature contribution'
+            yaxis_title='Signature contribution',
+            xaxis=dict(
+                tickmode='array',
+                tickvals=list(range(1, decompos_r[0].shape[0] + 1)),
+                ticktext=[f'Sig {best_signatures[i] + 1}' for i in range(decompos_r[0].shape[0])]
+            )
         )
         from decompose import decomposeQ
         #best_signatures, bootstrap_r, decompos_r = backward_elimination(patient_column, signatures, R=100,
@@ -138,9 +144,14 @@ def update_output(fold_size, R, mutation_count, patient, stored_data, signatures
                 name=f'Sig {best_signatures[i] + 1}'))
 
         fig_model_selection_forward.update_layout(
-            title=f'Backward elimination selection signatures for  {patient}',
+            title=f'Backward elimination selection signatures for {patient}',
             xaxis_title='Sig',
-            yaxis_title='Signature contribution'
+            yaxis_title='Signature contribution',
+            xaxis=dict(
+                tickmode='array',
+                tickvals=list(range(1, decompos_r[0].shape[0] + 1)),
+                ticktext=[f'Sig {best_signatures[i]}' for i in range(decompos_r[0].shape[0])]
+            )
         )
 
         return fig_cross, fig_bootstrap, fig_model_selection, fig_model_selection_forward, mutation_count

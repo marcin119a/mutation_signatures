@@ -61,13 +61,7 @@ def backward_elimination(
             max_p_var = p_values.argmax()
             best_columns = np.delete(best_columns, max_p_var)
             P_temp = P[:, best_columns]
-            exposures, errors = findSigExposures(
-                m.reshape(-1, 1),
-                P_temp,
-                decomposition_method=decomposition_method,
-            )
-            print(exposures.sum(axis=0))
-            print(calculate_BIC(P_temp, exposures, errors))
+
             changed = True
 
         if not changed:
@@ -78,7 +72,7 @@ def backward_elimination(
         bootstrapSigExposures(
             m,
             P_temp,
-            mutation_count=1000,
+            mutation_count=mutation_count,
             R=R,
             decomposition_method=decomposition_method,
         ),
@@ -106,7 +100,7 @@ def forward_elimination(
             # Try adding the ith column to the model
             P_temp_with_i = np.hstack([P_temp, P[:, [i]]])
             p_values = runBootstrapOnMatrix(
-                m, P_temp_with_i, R, mutation_count=1000, threshold=0.05
+                m, P_temp_with_i, R, mutation_count=mutation_count, threshold=threshold
             )
 
             # Check if the new variable is significant and better than the current best
@@ -145,9 +139,21 @@ if __name__ == '__main__':
     tumorBRCA = np.genfromtxt('output/M.csv', delimiter=',', skip_header=1)
     patients = np.genfromtxt('output/M.csv', delimiter=',', max_rows=1, dtype=str)[1:]
     tumorBRCA = np.delete(tumorBRCA, 0, axis=1)
-    signaturesCOSMIC = np.genfromtxt('output/signatures.csv', delimiter=',', skip_header=1)
+    signaturesCOSMIC = np.genfromtxt('data/signaturesProfiler.csv', delimiter=',', skip_header=1)
     signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)
-    first_col = tumorBRCA[:, 1]
+    import pandas as pd
+    ground_truth = pd.read_csv('output/WGS-decomposition__PCAWG_sigProfiler_SBS_signatures_in_samples.csv')
+    ground_truth = ground_truth.drop(columns=['Cancer Types', 'Sample Names', 'Accuracy'])
+    ground_truth.columns = [x for x in range(0, 65)]
 
-    a, b, c = backward_elimination(first_col, signaturesCOSMIC, threshold=0.01, mutation_count=1000, R=10, significance_level=0.01)
-    print(a)
+    for i in range(tumorBRCA.shape[1]):
+        first_col = tumorBRCA[:, i]
+        patient = ground_truth.iloc[i]
+
+        non_zero_condition = (patient != 0)
+        indexes = non_zero_condition[non_zero_condition].index.tolist()
+
+
+        best_columns, b, c = backward_elimination(first_col, signaturesCOSMIC, threshold=0.01, mutation_count=1000, R=10, significance_level=0.01)
+        print(best_columns, indexes)
+        print(sorted(best_columns) == sorted(indexes))

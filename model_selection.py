@@ -4,7 +4,7 @@ from utils import calculate_BIC
 from decompose import decomposeQP
 
 def runBootstrapOnMatrix(
-    M, P, R, mutation_count, threshold=0.01, decomposition_method=decomposeQP
+    m, P, R, mutation_count, threshold=0.01, decomposition_method=decomposeQP
 ):
     def process_column(column):
         exposures, errors = bootstrapSigExposures(
@@ -12,14 +12,14 @@ def runBootstrapOnMatrix(
         )
         return exposures > threshold
 
-    all_exposures = np.apply_along_axis(process_column, 0, M)
+    all_exposures = np.apply_along_axis(process_column, 0, m)
 
     return 1 - all_exposures.sum(axis=1) / all_exposures.shape[1]
 
 
 
 def runCrossvaldiationOnMatrix(
-    M, P, fold_size=4, threshold=0.01, decomposition_method=decomposeQP
+    m, P, fold_size=4, threshold=0.01, decomposition_method=decomposeQP
 ):
     def process_column(column):
         exposures, errors = crossValidationSigExposures(
@@ -31,7 +31,7 @@ def runCrossvaldiationOnMatrix(
         )
         return exposures > threshold
 
-    all_exposures = np.apply_along_axis(process_column, 0, M)
+    all_exposures = np.apply_along_axis(process_column, 0, m)
 
     return 1 - all_exposures.sum(axis=1) / all_exposures.shape[1]
 

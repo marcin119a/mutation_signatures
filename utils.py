@@ -39,3 +39,19 @@ def load_and_process_data(patient_index, mutational_profiles, predf_mutational_s
 
         # Return processed data
         return profile, signatures
+
+def calculate_sensitivity_specificity(predicted, actual, total_values):
+    predicted_set = set(predicted)
+    actual_set = set(actual)
+    all_values_set = set(range(total_values))
+
+    true_positives = len(predicted_set.intersection(actual_set))
+    true_negatives = len(all_values_set.difference(actual_set).difference(predicted_set))
+
+    total_positives = len(actual_set)
+    total_negatives = total_values - total_positives
+
+    sensitivity = true_positives / total_positives if total_positives else 0
+    specificity = true_negatives / total_negatives if total_negatives else 0
+
+    return sensitivity, specificity

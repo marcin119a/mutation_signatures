@@ -133,28 +133,57 @@ def forward_elimination(
     )
 
 
+def save_to_dataframe(best_columns, findSigExposures, cancer_type, patient):
+    """
+    Saves the best_columns and findSigExposures to a pandas DataFrame.
+    """
+    # Create a DataFrame with findSigExposures as a column
+    df = pd.DataFrame(findSigExposures, columns=['findSigExposures'])
+    # Add the best_columns as another column, ensuring the length matches
+    # If best_columns is shorter, pad with None or a default value
+    df['best_columns'] = pd.Series(best_columns).reindex(df.index)
+    df['Cancer Types'] = cancer_type
+    df['Sample Names'] = patient
+
+
+    return df
 
 #to test
+import pandas as pd
 if __name__ == '__main__':
     tumorBRCA = np.genfromtxt('output/M.csv', delimiter=',', skip_header=1)
     tumorBRCA = np.delete(tumorBRCA, 0, axis=1)
-    tumorBRCA = tumorBRCA[:,:100]
+    tumorBRCA = tumorBRCA[:,:2]
 
     signaturesCOSMIC = np.genfromtxt('data/signaturesProfiler.csv', delimiter=',', skip_header=1)
     signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)
-    import pandas as pd
-    ground_truth = pd.read_csv('output/WGS-decomposition__PCAWG_sigProfiler_SBS_signatures_in_samples.csv')
-    ground_truth = ground_truth.drop(columns=['Cancer Types', 'Sample Names', 'Accuracy'])
+    df = pd.read_csv('output/WGS-decomposition__PCAWG_sigProfiler_SBS_signatures_in_samples.csv')
+    ground_truth = df.drop(columns=['Cancer Types', 'Sample Names', 'Accuracy'])
     ground_truth.columns = [x for x in range(0, 65)]
+
+    result_df, ground_truth_df = pd.DataFrame(), pd.DataFrame()
 
     for i in range(tumorBRCA.shape[1]):
         first_col = tumorBRCA[:, i]
         patient = ground_truth.iloc[i]
+        patient = patient / patient.sum()
 
         non_zero_condition = (patient != 0)
         indexes = non_zero_condition[non_zero_condition].index.tolist()
 
+        best_columns, b, estimation_exposures = backward_elimination(first_col, signaturesCOSMIC, threshold=0.01, mutation_count=None, R=20, significance_level=0.01)
 
-        best_columns, b, c = backward_elimination(first_col, signaturesCOSMIC, threshold=0.01, mutation_count=None, R=20, significance_level=0.01)
-        print(best_columns, indexes)
-        print(sorted(best_columns) == sorted(indexes))
+        r = save_to_dataframe(indexes, patient[indexes].to_numpy(), df.iloc[i]['Sample Names'], df.iloc[i]['Cancer Types'])
+        ground_truth_df = pd.concat([r, ground_truth_df], ignore_index=True)
+
+        r = save_to_dataframe(best_columns, estimation_exposures[0], df.iloc[i]['Sample Names'], df.iloc[i]['Cancer Types'])
+        result_df = pd.concat([r, result_df], ignore_index=True)
+
+
+    ground_truth_df.to_csv('output/experiment.csv')
+    result_df.to_csv('output/ground_truth.csv')
+
+
+
+
+

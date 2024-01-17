@@ -58,7 +58,8 @@ def backward_elimination(
 
         max_p_value = p_values.max()
         if max_p_value > significance_level:
-            max_p_var = p_values.argmax()
+            indices_with_max = np.where(p_values == max_p_value)[0]
+            max_p_var = np.random.choice(indices_with_max)
             best_columns = np.delete(best_columns, max_p_var)
             P_temp = P[:, best_columns]
 
@@ -151,17 +152,16 @@ def save_to_dataframe(best_columns, findSigExposures, cancer_type, patient):
 #to test
 import pandas as pd
 if __name__ == '__main__':
-    tumorBRCA = np.genfromtxt('output/M.csv', delimiter=',', skip_header=1)
+    tumorBRCA = np.genfromtxt('output/M.csv', delimiter='\t', skip_header=1)
     tumorBRCA = np.delete(tumorBRCA, 0, axis=1)
-    tumorBRCA = tumorBRCA[:,:2]
 
-    signaturesCOSMIC = np.genfromtxt('data/signaturesProfiler.csv', delimiter=',', skip_header=1)
+    signaturesCOSMIC = np.genfromtxt('output/WGS_signatures__sigProfiler_SBS_signatures_2019_05_22.modified.csv', delimiter='\t', skip_header=1)
     signaturesCOSMIC = np.delete(signaturesCOSMIC, 0, axis=1)
     df = pd.read_csv('output/WGS-decomposition__PCAWG_sigProfiler_SBS_signatures_in_samples.csv')
     ground_truth = df.drop(columns=['Cancer Types', 'Sample Names', 'Accuracy'])
     ground_truth.columns = [x for x in range(0, 65)]
 
-    result_df, ground_truth_df = pd.DataFrame(), pd.DataFrame()
+    ground_truth_df, experiment_df = pd.DataFrame(), pd.DataFrame()
 
     for i in range(tumorBRCA.shape[1]):
         first_col = tumorBRCA[:, i]
@@ -170,18 +170,19 @@ if __name__ == '__main__':
 
         non_zero_condition = (patient != 0)
         indexes = non_zero_condition[non_zero_condition].index.tolist()
-
-        best_columns, b, estimation_exposures = backward_elimination(first_col, signaturesCOSMIC, threshold=0.01, mutation_count=None, R=20, significance_level=0.01)
-
+        try:
+            best_columns, b, estimation_exposures = backward_elimination(first_col, signaturesCOSMIC, threshold=0.01, mutation_count=None, R=20, significance_level=0.01)
+        except:
+            continue
         r = save_to_dataframe(indexes, patient[indexes].to_numpy(), df.iloc[i]['Sample Names'], df.iloc[i]['Cancer Types'])
-        ground_truth_df = pd.concat([r, ground_truth_df], ignore_index=True)
+        experiment_df = pd.concat([r, experiment_df], ignore_index=True)
 
         r = save_to_dataframe(best_columns, estimation_exposures[0], df.iloc[i]['Sample Names'], df.iloc[i]['Cancer Types'])
-        result_df = pd.concat([r, result_df], ignore_index=True)
+        result_df = pd.concat([r, ground_truth_df], ignore_index=True)
 
 
-    ground_truth_df.to_csv('output/experiment.csv')
-    result_df.to_csv('output/ground_truth.csv')
+    experiment_df.to_csv('output/experiment.csv')
+    ground_truth_df.to_csv('output/ground_truth.csv')
 
 
 

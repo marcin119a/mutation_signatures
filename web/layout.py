@@ -7,7 +7,7 @@ app = dash.Dash(__name__)
 
 data = {
     'signaturesCOSMIC.csv': [x for x in range(1, 31) ],
-    'signaturesProfiler.csv': [x for x in range(0, 64)],
+    'WGS_signatures__sigProfiler_SBS_signatures_2019_05_22.modified.csv': [x for x in range(0, 64)],
     'COSMIC_v1_SBS_GRCh37.txt': [1, 2, 3, 4, 5, 6, 7, 9, 15],
     'COSMIC_v2_SBS_GRCh37.txt': [1, 2, 3, 5, 6, 8, 13, 17, 18, 20, 26, 30],
     'COSMIC_v3.1_SBS_GRCh37.txt': [1, 2, 3, 5, 6, 8, 13, 17, 18, 20, 26, 30],
@@ -82,7 +82,7 @@ app.layout = html.Div([
         dcc.Dropdown(
             id='dropdown',
             options=[
-                {'label': 'signaturesProfiler', 'value': 'signaturesProfiler.csv'},
+                {'label': 'signaturesProfiler', 'value': 'WGS_signatures__sigProfiler_SBS_signatures_2019_05_22.modified.csv'},
                 {'label': 'signaturesCOSMIC', 'value': 'signaturesCOSMIC.csv'},
                 {'label': 'COSMIC_v1_SBS_GRCh37', 'value': 'COSMIC_v1_SBS_GRCh37.txt'},
                 {'label': 'COSMIC_v2_SBS_GRCh37.txt', 'value': 'COSMIC_v2_SBS_GRCh37.txt'},
@@ -90,13 +90,13 @@ app.layout = html.Div([
                 {'label': 'COSMIC_v3.4_SBS_GRCh37.txt', 'value': 'COSMIC_v3.4_SBS_GRCh37.txt'},
             ],
             disabled=True,
-            value='signaturesProfiler.csv'
+            value='WGS_signatures__sigProfiler_SBS_signatures_2019_05_22.modified.csv'
         ),
         dcc.Dropdown(
             id='signatures-dropdown',
             options=[{'label': k, 'value': k} for k in data.keys()],
             multi=True,
-            value=[k for k in data['signaturesProfiler.csv']],
+            value=[k for k in data['WGS_signatures__sigProfiler_SBS_signatures_2019_05_22.modified.csv']],
         ),
     ], style={'padding': '10px'}),
 

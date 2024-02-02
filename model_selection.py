@@ -161,7 +161,7 @@ if __name__ == '__main__':
     ground_truth = df.drop(columns=['Cancer Types', 'Sample Names', 'Accuracy'])
     ground_truth.columns = [x for x in range(0, 65)]
 
-    ground_truth_df, experiment_df = pd.DataFrame(), pd.DataFrame()
+    result_df, experiment_df = pd.DataFrame(), pd.DataFrame()
 
     for i in range(tumorBRCA.shape[1]):
         first_col = tumorBRCA[:, i]
@@ -171,18 +171,18 @@ if __name__ == '__main__':
         non_zero_condition = (patient != 0)
         indexes = non_zero_condition[non_zero_condition].index.tolist()
         try:
-            best_columns, b, estimation_exposures = backward_elimination(first_col, signaturesCOSMIC, threshold=0.01, mutation_count=None, R=20, significance_level=0.01)
+            best_columns, b, estimation_exposures = backward_elimination(first_col, signaturesCOSMIC, threshold=0.01, mutation_count=None, R=50, significance_level=0.01)
         except:
             continue
         r = save_to_dataframe(indexes, patient[indexes].to_numpy(), df.iloc[i]['Sample Names'], df.iloc[i]['Cancer Types'])
         experiment_df = pd.concat([r, experiment_df], ignore_index=True)
 
         r = save_to_dataframe(best_columns, estimation_exposures[0], df.iloc[i]['Sample Names'], df.iloc[i]['Cancer Types'])
-        result_df = pd.concat([r, ground_truth_df], ignore_index=True)
+        result_df = pd.concat([r, result_df], ignore_index=True)
 
 
-    experiment_df.to_csv('output/experiment.csv')
-    ground_truth_df.to_csv('output/ground_truth.csv')
+        experiment_df.to_csv('output/ground_truth.csv')
+        result_df.to_csv('output/experiment.csv')
 
 
 

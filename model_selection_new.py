@@ -10,13 +10,14 @@ def compute_p_value(exposures, threshold=0.01):
 
 def bootstraped_patient(m, mutation_count, R):
     K = len(m)
-    m = m / np.sum(m)
 
     if mutation_count is None:
         if all(is_wholenumber(val) for val in m):
             mutation_count = int(m.sum())
         else:
             raise ValueError("Please specify the parameter 'mutation_count' in the function call or provide mutation counts in parameter 'm'.")
+    m = m / np.sum(m)
+
 
     def bootstrap_sample(m, mutation_count, K):
         mutations_sampled = np.random.choice(K, size=mutation_count, p=m)
